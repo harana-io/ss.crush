@@ -5,2229 +5,426 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>S.S. CRUSH</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body {
-  background:
-    radial-gradient(circle at 50% 18%, rgba(22,78,78,0.20), transparent 28%),
-    radial-gradient(circle at 82% 24%, rgba(255,140,62,0.12), transparent 18%),
-    linear-gradient(180deg, #01040b 0%, #020710 45%, #010205 100%);
-  overflow:hidden;
-  font-family:'Courier New',monospace;
-  touch-action:none;
-  overscroll-behavior:none;
-  -webkit-tap-highlight-color:transparent;
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;overflow:hidden;font-family:'Courier New',monospace;touch-action:none;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+canvas{display:block;position:fixed;top:0;left:0}
+#hud{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
+#hud::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,transparent 48%,rgba(0,0,0,0.18) 76%,rgba(0,0,0,0.42) 100%),linear-gradient(180deg,rgba(2,8,14,0) 0%,rgba(2,8,14,0.14) 100%)}
+#title{position:absolute;top:22px;left:50%;transform:translateX(-50%);font-size:clamp(18px,3.5vw,36px);font-weight:700;letter-spacing:10px;color:#00ffaa;text-shadow:0 0 10px rgba(0,255,170,0.55),0 0 28px rgba(0,221,136,0.28);white-space:nowrap}
+#sub{position:absolute;top:64px;left:50%;transform:translateX(-50%);font-size:clamp(7px,1vw,11px);letter-spacing:4px;color:rgba(154,231,210,0.42);white-space:nowrap;text-transform:uppercase}
+#drag-hint{position:absolute;top:50%;right:22px;transform:translateY(-50%);font-size:9px;letter-spacing:3px;color:rgba(126,216,185,0.26);writing-mode:vertical-rl;text-transform:uppercase}
+#crew{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:flex-end}
+.card{position:relative;width:170px;min-height:166px;display:flex;flex-direction:column;justify-content:flex-start;background:linear-gradient(180deg,rgba(7,24,25,0.88),rgba(3,14,13,0.82));border:1px solid rgba(94,222,174,0.24);border-radius:14px;padding:12px 14px 11px;text-align:left;backdrop-filter:blur(10px);box-shadow:0 10px 24px rgba(0,0,0,0.34),inset 0 1px 0 rgba(152,255,214,0.10);overflow:hidden}
+.card::before{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:linear-gradient(180deg,rgba(255,255,255,0.65),transparent);opacity:0.75}
+.card-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.ci{width:34px;height:34px;display:grid;place-items:center;font-size:19px;border-radius:10px;background:rgba(255,255,255,0.06);box-shadow:inset 0 1px 0 rgba(255,255,255,0.10)}
+.cn{font-size:10px;letter-spacing:2px;color:#dffff0;font-weight:700}
+.cc{font-size:8px;color:rgba(196,244,219,0.58);margin-top:3px;letter-spacing:1.1px;text-transform:uppercase}
+.ct{font-size:10px;line-height:1.45;color:rgba(214,240,230,0.82);margin-top:7px}
+.card.monk{background:linear-gradient(180deg,rgba(19,29,22,0.92),rgba(9,18,14,0.86))}.card.monk::before{background:linear-gradient(180deg,#f3c95c,#986f11)}.card.monk .ci{color:#ffd36b}
+.card.bro{background:linear-gradient(180deg,rgba(17,25,32,0.92),rgba(7,13,18,0.86))}.card.bro::before{background:linear-gradient(180deg,#8ec9ff,#355b85)}.card.bro .ci{color:#8ec9ff}
+.card.wizard{background:linear-gradient(180deg,rgba(27,18,33,0.92),rgba(14,8,18,0.88))}.card.wizard::before{background:linear-gradient(180deg,#d28dff,#703e8f)}.card.wizard .ci{color:#e0a2ff}
+.card.tabaxi{background:linear-gradient(180deg,rgba(31,22,15,0.92),rgba(14,10,7,0.88))}.card.tabaxi::before{background:linear-gradient(180deg,#ffbd73,#9f5b1f)}.card.tabaxi .ci{color:#ffc37e}
+#bubble{position:absolute;top:13%;right:5%;background:linear-gradient(180deg,rgba(6,25,16,0.92),rgba(3,14,10,0.90));border:1px solid rgba(98,228,164,0.36);border-radius:14px;padding:11px 17px;max-width:210px;font-size:12px;line-height:1.6;color:rgba(130,255,190,0.95);opacity:0;transition:opacity 0.6s ease;backdrop-filter:blur(10px);box-shadow:0 10px 28px rgba(0,0,0,0.26),0 0 24px rgba(0,255,100,0.05)}
+#bubble::after{content:'';position:absolute;bottom:-9px;left:22px;border:0 solid transparent;border-left:8px solid transparent;border-right:8px solid transparent;border-top:9px solid rgba(0,255,120,0.42)}
+#loader{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;transition:opacity 1.2s}
+#lt{color:#00ffaa;letter-spacing:5px;font-size:11px;margin-bottom:16px;font-family:'Courier New',monospace}
+#lb{width:160px;height:2px;background:rgba(0,255,130,0.14);border-radius:2px;overflow:hidden}
+#lf{height:100%;width:0%;background:#00ffaa;transition:width 0.35s}
+@media(max-width:900px),(pointer:coarse){
+#title{top:16px;width:min(92vw,560px);font-size:clamp(16px,5.2vw,28px);letter-spacing:.32em;text-align:center;line-height:1.15;white-space:normal}
+#sub{top:58px;width:min(90vw,640px);font-size:clamp(8px,2.2vw,11px);line-height:1.45;letter-spacing:.22em;text-align:center;white-space:normal}
+#drag-hint{top:auto;bottom:118px;right:16px;transform:none;writing-mode:horizontal-tb;font-size:8px;letter-spacing:.18em}
+#crew{width:min(94vw,520px);bottom:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:stretch}
+.card{min-width:0;width:auto;min-height:0;padding:9px 10px 8px;border-radius:12px;backdrop-filter:blur(7px)}
+.card-top{gap:8px;margin-bottom:4px}.ci{width:30px;height:30px;font-size:17px}.cn{font-size:8px;letter-spacing:.16em}.cc{font-size:7px}.ct{font-size:9px;line-height:1.35;margin-top:5px}
+#bubble{top:auto;right:12px;bottom:108px;left:12px;max-width:none;padding:10px 14px;font-size:11px;line-height:1.5;backdrop-filter:blur(7px)}#bubble::after{left:auto;right:24px}
 }
-canvas { display:block; position:fixed; top:0; left:0; }
-
-#hud {
-  position:fixed; top:0; left:0; width:100%; height:100%;
-  pointer-events:none; z-index:10;
-}
-#hud::before {
-  content:'';
-  position:absolute; inset:0;
-  background:
-    radial-gradient(circle at center, transparent 48%, rgba(0,0,0,0.18) 76%, rgba(0,0,0,0.42) 100%),
-    linear-gradient(180deg, rgba(2,8,14,0.00) 0%, rgba(2,8,14,0.14) 100%);
-}
-#title {
-  position:absolute; top:22px; left:50%; transform:translateX(-50%);
-  font-size:clamp(18px,3.5vw,36px); font-weight:700; letter-spacing:10px;
-  color:#00ffaa;
-  text-shadow:0 0 10px rgba(0,255,170,0.55),0 0 28px rgba(0,221,136,0.28);
-  white-space:nowrap;
-}
-#sub {
-  position:absolute; top:64px; left:50%; transform:translateX(-50%);
-  font-size:clamp(7px,1vw,11px); letter-spacing:4px; color:rgba(154,231,210,0.42);
-  white-space:nowrap; text-transform:uppercase;
-}
-#drag-hint {
-  position:absolute; top:50%; right:22px; transform:translateY(-50%);
-  font-size:9px; letter-spacing:3px; color:rgba(126,216,185,0.26);
-  writing-mode:vertical-rl; text-transform:uppercase;
-}
-#crew {
-  position:absolute; bottom:18px; left:50%; transform:translateX(-50%);
-  display:flex; gap:10px; align-items:flex-end;
-}
-.card {
-  position:relative;
-  width:170px;
-  min-height:166px;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-start;
-  background:linear-gradient(180deg, rgba(7,24,25,0.88), rgba(3,14,13,0.82));
-  border:1px solid rgba(94,222,174,0.24);
-  border-radius:14px; padding:12px 14px 11px;
-  text-align:left;
-  backdrop-filter:blur(10px);
-  box-shadow:0 10px 24px rgba(0,0,0,0.34), inset 0 1px 0 rgba(152,255,214,0.10);
-  overflow:hidden;
-}
-.card::before {
-  content:'';
-  position:absolute; inset:0 auto 0 0; width:3px;
-  background:linear-gradient(180deg, rgba(255,255,255,0.65), transparent);
-  opacity:0.75;
-}
-.card-top {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-bottom:6px;
-}
-.ci {
-  width:34px; height:34px;
-  display:grid; place-items:center;
-  font-size:19px;
-  border-radius:10px;
-  background:rgba(255,255,255,0.06);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.10);
-}
-.cn { font-size:10px; letter-spacing:2px; color:#dffff0; font-weight:700; }
-.cc { font-size:8px; color:rgba(196,244,219,0.58); margin-top:3px; letter-spacing:1.1px; text-transform:uppercase; }
-.ct {
-  font-size:10px;
-  line-height:1.45;
-  color:rgba(214,240,230,0.82);
-  margin-top:7px;
-}
-.card.monk { background:linear-gradient(180deg, rgba(19,29,22,0.92), rgba(9,18,14,0.86)); }
-.card.monk::before { background:linear-gradient(180deg, #f3c95c, #986f11); }
-.card.monk .ci { color:#ffd36b; }
-.card.bro { background:linear-gradient(180deg, rgba(17,25,32,0.92), rgba(7,13,18,0.86)); }
-.card.bro::before { background:linear-gradient(180deg, #8ec9ff, #355b85); }
-.card.bro .ci { color:#8ec9ff; }
-.card.wizard { background:linear-gradient(180deg, rgba(27,18,33,0.92), rgba(14,8,18,0.88)); }
-.card.wizard::before { background:linear-gradient(180deg, #d28dff, #703e8f); }
-.card.wizard .ci { color:#e0a2ff; }
-.card.tabaxi { background:linear-gradient(180deg, rgba(31,22,15,0.92), rgba(14,10,7,0.88)); }
-.card.tabaxi::before { background:linear-gradient(180deg, #ffbd73, #9f5b1f); }
-.card.tabaxi .ci { color:#ffc37e; }
-
-#bubble {
-  position:absolute; top:13%; right:5%;
-  background:linear-gradient(180deg, rgba(6,25,16,0.92), rgba(3,14,10,0.90));
-  border:1px solid rgba(98,228,164,0.36);
-  border-radius:14px; padding:11px 17px;
-  max-width:210px; font-size:12px; line-height:1.6;
-  color:rgba(130,255,190,0.95);
-  opacity:0; transition:opacity 0.6s ease;
-  backdrop-filter:blur(10px);
-  box-shadow:0 10px 28px rgba(0,0,0,0.26), 0 0 24px rgba(0,255,100,0.05);
-}
-#bubble::after {
-  content:''; position:absolute;
-  bottom:-9px; left:22px;
-  border:0 solid transparent;
-  border-left:8px solid transparent;
-  border-right:8px solid transparent;
-  border-top:9px solid rgba(0,255,120,0.42);
-}
-#loader {
-  position:fixed; inset:0; background:#000014;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center; z-index:200;
-  transition:opacity 1.2s;
-}
-#lt { color:#00ffaa; letter-spacing:5px; font-size:11px; margin-bottom:16px; font-family:'Courier New',monospace; }
-#lb { width:160px; height:2px; background:rgba(0,255,130,0.14); border-radius:2px; overflow:hidden; }
-#lf { height:100%; width:0%; background:#00ffaa; transition:width 0.35s; }
-
-@media (max-width: 900px), (pointer: coarse) {
-  #title {
-    top:16px;
-    width:min(92vw, 560px);
-    font-size:clamp(16px, 5.2vw, 28px);
-    letter-spacing:0.32em;
-    text-align:center;
-    line-height:1.15;
-    white-space:normal;
-  }
-  #sub {
-    top:58px;
-    width:min(90vw, 640px);
-    font-size:clamp(8px, 2.2vw, 11px);
-    line-height:1.45;
-    letter-spacing:0.22em;
-    text-align:center;
-    white-space:normal;
-  }
-  #drag-hint {
-    top:auto;
-    bottom:118px;
-    right:16px;
-    transform:none;
-    writing-mode:horizontal-tb;
-    font-size:8px;
-    letter-spacing:0.18em;
-  }
-  #crew {
-    width:min(94vw, 520px);
-    bottom:12px;
-    display:grid;
-    grid-template-columns:repeat(2, minmax(0, 1fr));
-    gap:8px;
-    align-items:stretch;
-  }
-  .card {
-    min-width:0;
-    width:auto;
-    min-height:0;
-    padding:9px 10px 8px;
-    border-radius:12px;
-    backdrop-filter:blur(7px);
-  }
-  .card-top { gap:8px; margin-bottom:4px; }
-  .ci { width:30px; height:30px; font-size:17px; }
-  .cn { font-size:8px; letter-spacing:0.16em; }
-  .cc { font-size:7px; }
-  .ct { font-size:9px; line-height:1.35; margin-top:5px; }
-  #bubble {
-    top:auto;
-    right:12px;
-    bottom:108px;
-    left:12px;
-    max-width:none;
-    padding:10px 14px;
-    font-size:11px;
-    line-height:1.5;
-    backdrop-filter:blur(7px);
-  }
-  #bubble::after {
-    left:auto;
-    right:24px;
-  }
-}
-
-@media (max-width: 520px) {
-  #title { top:14px; letter-spacing:0.24em; }
-  #sub { top:52px; font-size:8px; }
-  #drag-hint { bottom:104px; right:12px; }
-  #crew { width:calc(100% - 20px); }
-  .card { padding:8px 8px; }
-  #bubble { bottom:98px; }
-}
+@media(max-width:520px){#title{top:14px;letter-spacing:.24em}#sub{top:52px;font-size:8px}#drag-hint{bottom:104px;right:12px}#crew{width:calc(100% - 20px)}.card{padding:8px}#bubble{bottom:98px}}
 </style>
 </head>
 <body>
 <div id="loader"><div id="lt">BOOTING S.S. CRUSH</div><div id="lb"><div id="lf"></div></div></div>
 <div id="hud">
-  <div id="title">S.S. CRUSH</div>
-  <div id="sub">Bio-Mechanical Deep Space Vessel &middot; Eternal Plane Conversion &middot; Departing Donut System</div>
-  <div id="drag-hint">Drag / Pinch to Zoom</div>
-  <div id="crew">
-    <div class="card monk">
-      <div class="card-top"><div class="ci">&#x1F94B;</div><div><div class="cn">Fahad</div><div class="cc">Monk &middot; Hands Only</div></div></div>
-      <div class="ct">Punches first, questions everything, loves balls an absurd amount, and acts on pure cosmic randomness.</div>
-    </div>
-    <div class="card bro">
-      <div class="card-top"><div class="ci">&#x2694;&#xFE0F;</div><div><div class="cn">Bradford</div><div class="cc">Champion &middot; Bro Guy</div></div></div>
-      <div class="ct">Beer in hand, morale maxed. A loud leader, backup healer, motivator, and magical hype machine.</div>
-    </div>
-    <div class="card wizard">
-      <div class="card-top"><div class="ci">&#x1F9D9;</div><div><div class="cn">Galamiel</div><div class="cc">Wizardsmith &middot; Space-Cut Blade</div></div></div>
-      <div class="ct">Wild-eyed swordsmith oracle. Talks sideways, forgets where he is, then blurts the right answer anyway.</div>
-    </div>
-    <div class="card tabaxi">
-      <div class="card-top"><div class="ci">&#x1F431;</div><div><div class="cn">Meowcenary</div><div class="cc">Tabaxi Champion &middot; 6'2"</div></div></div>
-      <div class="ct">Antonio-Banderas swagger, milk loyalty, beer tolerance, sneaky instincts, and master-level weapon work.</div>
-    </div>
-  </div>
-  <div id="bubble"></div>
+<div id="title">S.S. CRUSH</div>
+<div id="sub">Bio-Mechanical Deep Space Vessel · Eternal Plane Conversion · Departing Donut System</div>
+<div id="drag-hint">Drag / Pinch to Zoom</div>
+<div id="crew">
+<div class="card monk"><div class="card-top"><div class="ci">🥋</div><div><div class="cn">Fahad</div><div class="cc">Monk · Hands Only</div></div></div><div class="ct">Punches first, questions everything, loves balls an absurd amount, and acts on pure cosmic randomness.</div></div>
+<div class="card bro"><div class="card-top"><div class="ci">⚔️</div><div><div class="cn">Bradford</div><div class="cc">Champion · Bro Guy</div></div></div><div class="ct">Beer in hand, morale maxed. A loud leader, backup healer, motivator, and magical hype machine.</div></div>
+<div class="card wizard"><div class="card-top"><div class="ci">🧙</div><div><div class="cn">Galamiel</div><div class="cc">Wizardsmith · Space-Cut Blade</div></div></div><div class="ct">Wild-eyed swordsmith oracle. Talks sideways, forgets where he is, then blurts the right answer anyway.</div></div>
+<div class="card tabaxi"><div class="card-top"><div class="ci">🐱</div><div><div class="cn">Meowcenary</div><div class="cc">Tabaxi Champion · 6'2"</div></div></div><div class="ct">Antonio-Banderas swagger, milk loyalty, beer tolerance, sneaky instincts, and master-level weapon work.</div></div>
+</div>
+<div id="bubble"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script>
-// =============================================
-//  LOADER HELPER
-// =============================================
-const lf = document.getElementById('lf');
-const loader = document.getElementById('loader');
-const lt = document.getElementById('lt');
-function load(p) {
-  lf.style.width = p + '%';
-  if (p >= 100) setTimeout(() => {
-    loader.style.opacity = '0';
-    setTimeout(() => loader.style.display = 'none', 1200);
-  }, 300);
-}
+// BOOT
+const lf=document.getElementById('lf'),loader=document.getElementById('loader'),lt=document.getElementById('lt');
+function load(p){lf.style.width=p+'%';if(p>=100)setTimeout(()=>{loader.style.opacity='0';setTimeout(()=>loader.style.display='none',1200)},300)}
+window.addEventListener('error',e=>{lt.textContent='BOOT ERROR';lt.style.color='#ff7a7a';const d=document.createElement('div');d.style.cssText='margin-top:12px;max-width:420px;padding:0 22px;color:rgba(255,170,170,0.8);font-size:11px;letter-spacing:1px;text-align:center';d.textContent=(e&&e.message?e.message:'Unknown').slice(0,120);if(!document.getElementById('bed')){d.id='bed';loader.appendChild(d)}});
+load(5);
 
-window.addEventListener('error', (event) => {
-  lt.textContent = 'BOOT ERROR';
-  lt.style.color = '#ff7a7a';
-  const msg = (event && event.message ? event.message : 'Unknown error').slice(0, 120);
-  const detail = document.createElement('div');
-  detail.style.marginTop = '12px';
-  detail.style.maxWidth = '420px';
-  detail.style.padding = '0 22px';
-  detail.style.color = 'rgba(255,170,170,0.8)';
-  detail.style.fontSize = '11px';
-  detail.style.letterSpacing = '1px';
-  detail.style.textAlign = 'center';
-  detail.textContent = msg;
-  if (!document.getElementById('boot-error-detail')) {
-    detail.id = 'boot-error-detail';
-    loader.appendChild(detail);
-  }
-});
+// SIMPLEX NOISE
+const SN=(function(){
+const F2=.5*(Math.sqrt(3)-1),G2=(3-Math.sqrt(3))/6,F3=1/3,G3=1/6;
+const grad3=[[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],[0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]];
+const p=new Uint8Array(256);for(let i=0;i<256;i++)p[i]=i;
+for(let i=255;i>0;i--){const j=Math.floor(Math.random()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
+const perm=new Uint8Array(512),pm12=new Uint8Array(512);
+for(let i=0;i<512;i++){perm[i]=p[i&255];pm12[i]=perm[i]%12}
+function d2(g,x,y){return g[0]*x+g[1]*y}
+function d3(g,x,y,z){return g[0]*x+g[1]*y+g[2]*z}
+return{
+n2(x,y){const s=(x+y)*F2,i=Math.floor(x+s),j=Math.floor(y+s),t=(i+j)*G2,x0=x-(i-t),y0=y-(j-t);let i1,j1;if(x0>y0){i1=1;j1=0}else{i1=0;j1=1}const x1=x0-i1+G2,y1=y0-j1+G2,x2=x0-1+2*G2,y2=y0-1+2*G2,ii=i&255,jj=j&255;let n0=0,n1=0,n2=0,t0=.5-x0*x0-y0*y0;if(t0>=0){t0*=t0;n0=t0*t0*d2(grad3[pm12[ii+perm[jj]]],x0,y0)}let t1=.5-x1*x1-y1*y1;if(t1>=0){t1*=t1;n1=t1*t1*d2(grad3[pm12[ii+i1+perm[jj+j1]]],x1,y1)}let t2=.5-x2*x2-y2*y2;if(t2>=0){t2*=t2;n2=t2*t2*d2(grad3[pm12[ii+1+perm[jj+1]]],x2,y2)}return 70*(n0+n1+n2)},
+fbm(x,y,oct,lac,gain){let s=0,a=1,f=1,mx=0;for(let i=0;i<oct;i++){s+=this.n2(x*f,y*f)*a;mx+=a;a*=gain;f*=lac}return s/mx}
+}})();
 load(8);
 
-// =============================================
-//  RENDERER
-// =============================================
-const W = () => window.innerWidth;
-const H = () => window.innerHeight;
-const IS_MOBILE = window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
-const IS_SMALL_SCREEN = Math.min(W(), H()) < 760;
-const LOW_POWER = IS_MOBILE || ((navigator.deviceMemory || 8) <= 4) || ((navigator.hardwareConcurrency || 8) <= 4);
-const DPR_CAP = LOW_POWER ? 1.35 : 2;
-const ENABLE_SHADOWS = !LOW_POWER;
-const CAMERA_FOV = IS_SMALL_SCREEN ? 58 : 50;
-let camRadius = IS_SMALL_SCREEN ? 154 : 170;
+// PROCEDURAL TEXTURES
+function genTex(w,h,fn){const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d'),img=ctx.createImageData(w,h);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4,col=fn(x/w,y/h);img.data[i]=col[0];img.data[i+1]=col[1];img.data[i+2]=col[2];img.data[i+3]=255}ctx.putImageData(img,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t}
+function genNorm(w,h,hFn,str){const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d'),img=ctx.createImageData(w,h),s=str||2;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4,hL=hFn((x-1)/w,y/h),hR=hFn((x+1)/w,y/h),hD=hFn(x/w,(y-1)/h),hU=hFn(x/w,(y+1)/h);let nx=(hL-hR)*s,ny=(hD-hU)*s,nz=1;const l=Math.sqrt(nx*nx+ny*ny+nz*nz);img.data[i]=(nx/l*.5+.5)*255;img.data[i+1]=(ny/l*.5+.5)*255;img.data[i+2]=(nz/l*.5+.5)*255;img.data[i+3]=255}ctx.putImageData(img,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t}
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, DPR_CAP));
-renderer.setSize(W(), H());
-renderer.shadowMap.enabled = ENABLE_SHADOWS;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.12;
-document.body.appendChild(renderer.domElement);
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x00020e);
-scene.fog = new THREE.FogExp2(0x00020e, 0.0026);
-
-const camera = new THREE.PerspectiveCamera(CAMERA_FOV, W() / H(), 0.1, 3000);
-camera.position.set(0, 35, 175);
-camera.lookAt(0, 4, 0);
-
-window.addEventListener('resize', () => {
-  camera.aspect = W() / H();
-  camera.fov = Math.min(W(), H()) < 760 ? 58 : 50;
-  camera.updateProjectionMatrix();
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, Math.min(W(), H()) < 760 ? 1.35 : DPR_CAP));
-  renderer.setSize(W(), H());
-  camRadius = Math.min(W(), H()) < 760 ? 154 : 170;
-  zoomTarget = clamp(zoomTarget, Math.min(W(), H()) < 760 ? 96 : 110, MAX_RADIUS);
-});
-
+const shellCol=genTex(512,512,(u,v)=>{const n1=SN.fbm(u*6,v*6,4,2.1,.52),n2=SN.fbm(u*12+3.7,v*12+1.2,3,2,.45),sc=Math.pow(Math.abs(SN.n2(u*3.5,v*3.5)),.3)*.4;return[Math.min(255,40+n1*30+sc*25+n2*8|0),Math.min(255,75+n1*45+sc*30+n2*12|0),Math.min(255,30+n1*20+sc*10+n2*6|0)]});
+shellCol.repeat.set(2,2);
+const shellNorm=genNorm(512,512,(u,v)=>SN.fbm(u*12,v*12,5,2.2,.5)*.5+Math.abs(SN.n2(u*7,v*7))*.4+SN.n2(u*40,v*40)*.1,3);
+shellNorm.repeat.set(2,2);
+const skinCol=genTex(512,512,(u,v)=>{const n1=SN.fbm(u*5+10,v*5+10,4,2,.5),sp=SN.n2(u*8+5,v*8+5)>.3?.7:1;return[Math.min(255,(90+n1*35)*sp|0),Math.min(255,(130+n1*45)*sp|0),Math.min(255,(65+n1*25)*sp|0)]});
+const skinNorm=genNorm(512,512,(u,v)=>SN.fbm(u*10+10,v*10+10,4,2.1,.48)*.4+SN.n2(u*25+10,v*25+10)*.15+SN.n2(u*50,v*50)*.05,2.5);
+const nebTex=genTex(1024,512,(u,v)=>{const c=Math.pow(SN.fbm(u*3,v*3,6,2,.55)*.5+.5,2.5),w=Math.pow(SN.fbm(u*2+50,v*2+50,5,2.2,.5)*.5+.5,3),b=Math.pow(SN.fbm(u*4+100,v*4+100,4,1.9,.48)*.5+.5,2.8);return[Math.min(255,c*18+w*40+2|0),Math.min(255,c*8+b*12+2|0),Math.min(255,c*22+b*45+6|0)]});
 load(18);
 
-// =============================================
-//  LIGHTING
-// =============================================
-scene.add(new THREE.AmbientLight(0x1a2833, 0.65));
+// RENDERER + POSTPROCESSING
+const W=()=>window.innerWidth,H=()=>window.innerHeight;
+const IS_MOBILE=window.matchMedia('(max-width:900px),(pointer:coarse)').matches;
+const IS_SMALL=Math.min(W(),H())<760;
+const LOW_POWER=IS_MOBILE||((navigator.deviceMemory||8)<=4)||((navigator.hardwareConcurrency||8)<=4);
+const DPR_CAP=LOW_POWER?1.35:2;
+const ENABLE_SHADOWS=!LOW_POWER;
+let camRadius=IS_SMALL?154:170;
 
-// Main key - warm white from front-upper-right
-const kl = new THREE.DirectionalLight(0xffefdb, 2.0);
-kl.position.set(60, 90, 70);
-kl.castShadow = ENABLE_SHADOWS;
-kl.shadow.mapSize.set(LOW_POWER ? 1024 : 2048, LOW_POWER ? 1024 : 2048);
-kl.shadow.camera.near = 1; kl.shadow.camera.far = 300;
-kl.shadow.camera.left = kl.shadow.camera.bottom = -70;
-kl.shadow.camera.right = kl.shadow.camera.top = 70;
-kl.shadow.bias = -0.001;
-scene.add(kl);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,DPR_CAP));
+renderer.setSize(W(),H());
+renderer.shadowMap.enabled=ENABLE_SHADOWS;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.05;
+document.body.appendChild(renderer.domElement);
 
-// Left fill - cool teal
-const fl = new THREE.DirectionalLight(0x58d7c0, 0.52);
-fl.position.set(-70, 30, 50);
-scene.add(fl);
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x000208,0.0018);
+const camera=new THREE.PerspectiveCamera(IS_SMALL?58:50,W()/H(),0.1,3000);
+camera.position.set(0,35,175);camera.lookAt(0,4,0);
 
-// Back rim - deep blue
-const rl = new THREE.DirectionalLight(0x2f5ae2, 0.78);
-rl.position.set(-40, 10, -120);
-scene.add(rl);
-
-// Under-bounce - faint warm green
-const ul = new THREE.DirectionalLight(0x1a5c32, 0.22);
-ul.position.set(0, -60, 30);
-scene.add(ul);
-
-// Dome interior glow
-const domeGL = new THREE.PointLight(0x55ffcc, 1.4, 50);
-domeGL.position.set(0, 24, 0);
-scene.add(domeGL);
-
-// Rear booster glow
-const cgl1 = new THREE.PointLight(0xff8c33, 3.2, 48);
-cgl1.position.set(-32, 8, 0);
-scene.add(cgl1);
-
-// Acid mouth glow
-const agl = new THREE.PointLight(0x22ff44, 2.5, 35);
-agl.position.set(65, 0, 0);
-scene.add(agl);
-
-// Hat/head area light
-const hgl = new THREE.PointLight(0xff44aa, 1.15, 28);
-hgl.position.set(46, 26, 0);
-scene.add(hgl);
-
-// Strong rear bay interior light (visible through window)
-const rearBayMainLight = new THREE.PointLight(0x88ffd8, 4.5, 40);
-rearBayMainLight.position.set(-18, 12, 0);
-scene.add(rearBayMainLight);
-
-// Secondary rear bay warm accent
-const rearBayWarmLight = new THREE.PointLight(0xffcc66, 2.0, 30);
-rearBayWarmLight.position.set(-20, 10, 0);
-scene.add(rearBayWarmLight);
-
-load(28);
-
-// =============================================
-//  MATERIAL FACTORY
-// =============================================
-function M(hex, rough, metal, emitHex, emitInt) {
-  return new THREE.MeshStandardMaterial({
-    color: hex,
-    roughness: rough,
-    metalness: metal,
-    emissive: emitHex !== undefined ? emitHex : 0x000000,
-    emissiveIntensity: emitInt || 0
-  });
-}
-
-// Shell greens - richer, more Crush-like (warm green-brown tones)
-const MAT_SHELL      = M(0x3d6834, 0.82, 0.02, 0x0a1508, 0.02);
-const MAT_SCUTE_DARK = M(0x294d22, 0.86, 0.02, 0x000000, 0);
-const MAT_SCUTE_MID  = M(0x4a7840, 0.76, 0.02, 0x0d1309, 0.02);
-const MAT_SCUTE_LITE = M(0x6b9b52, 0.68, 0.02, 0x151b10, 0.03);
-const MAT_SKIN       = M(0x7da85a, 0.88, 0.00, 0x101a0a, 0.02);
-const MAT_SKIN_SHADE = M(0x5e7844, 0.92, 0.00, 0x060a04, 0.01);
-const MAT_SKIN_SPOT  = M(0x4a5c38, 0.90, 0.00, 0x000000, 0);
-const MAT_SKIN_WARM  = M(0x98b870, 0.86, 0.00, 0x141e0c, 0.02);
-
-// Metals
-const MAT_STEEL   = M(0x6d7a83, 0.28, 0.88, 0x0d1720, 0.08);
-const MAT_DARK_STEEL = M(0x2f3941, 0.32, 0.90, 0x000011, 0.03);
-const MAT_GOLD    = M(0xc48b1a, 0.36, 0.76, 0x2d1b00, 0.10);
-const MAT_COPPER  = M(0x9a5c2e, 0.42, 0.72, 0x1a0800, 0.06);
-
-// Cannon - Blastoise blue-grey
-const MAT_CANNON  = M(0x445c72, 0.34, 0.76, 0x001122, 0.05);
-const MAT_CANNON_RING = M(0x60738d, 0.24, 0.84, 0x001133, 0.08);
-const MAT_NOZZLE  = M(0x223344, 0.18, 0.90, 0x003388, 0.28);
-
-// Bio / organic
-const MAT_RED     = M(0xc21d35, 0.54, 0.18, 0x220004, 0.12);
-const MAT_PINK    = M(0xff4c86, 0.42, 0.08, 0x440011, 0.18);
-const MAT_WOOD    = M(0x6a3e12, 0.88, 0.04, 0x000000, 0);
-
-// Eyes
-const MAT_SCLERA  = M(0xe8ffe8, 0.30, 0.0, 0x223322, 0.08);
-const MAT_IRIS    = M(0x004400, 0.20, 0.0, 0x002200, 0.22);
-const MAT_PUPIL   = M(0x000800, 0.15, 0.0, 0x000000, 0);
-const MAT_GLEAM   = M(0xffffff, 0.05, 0.0, 0xffffff, 1.25);
-const MAT_TONGUE  = M(0xff4466, 0.72, 0.0, 0xcc1133, 0.55);
-
-// Emissive specials
-const MAT_GLOW_GREEN = M(0x00ff66, 0.5, 0.0, 0x00ee44, 1.9);
-const MAT_GLOW_BLUE  = M(0x44aaff, 0.4, 0.0, 0x2266ff, 2.0);
-const MAT_GLOW_PINK  = M(0xff66bb, 0.3, 0.1, 0xff2277, 1.4);
-const MAT_GLOW_GOLD  = M(0xffdd33, 0.3, 0.1, 0xffaa00, 1.5);
-const MAT_GLOW_WARM  = M(0xffaa44, 0.3, 0.0, 0xff8800, 1.6);
-
-// Glass dome
-const MAT_GLASS = new THREE.MeshPhysicalMaterial({
-  color: 0xb8ffef,
-  roughness: 0.08,
-  metalness: 0.0,
-  transparent: true,
-  opacity: 0.18,
-  emissive: 0x00261b,
-  emissiveIntensity: 0.16,
-  side: THREE.DoubleSide,
-  depthWrite: false
+const composer=new THREE.EffectComposer(renderer);
+composer.addPass(new THREE.RenderPass(scene,camera));
+const bloomPass=new THREE.UnrealBloomPass(new THREE.Vector2(W(),H()),LOW_POWER?.6:.85,.35,.82);
+composer.addPass(bloomPass);
+const filmPass=new THREE.ShaderPass({
+  uniforms:{tDiffuse:{value:null},time:{value:0},vigStr:{value:.35},grainInt:{value:LOW_POWER?.03:.045},chromStr:{value:LOW_POWER?.0008:.0015}},
+  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+  fragmentShader:'uniform sampler2D tDiffuse;uniform float time,vigStr,grainInt,chromStr;varying vec2 vUv;float rand(vec2 co){return fract(sin(dot(co,vec2(12.9898,78.233)))*43758.5453);}void main(){vec2 uv=vUv,dir=uv-.5;float d=length(dir);vec2 off=dir*d*chromStr;float r=texture2D(tDiffuse,uv+off).r,g=texture2D(tDiffuse,uv).g,b=texture2D(tDiffuse,uv-off).b;vec3 col=vec3(r,g,b);col*=1.-d*d*vigStr*2.;col+=rand(uv+fract(time))*grainInt-grainInt*.5;gl_FragColor=vec4(col,1.);}'
 });
-
-const MAT_GLASS_SHEEN = new THREE.MeshStandardMaterial({
-  color: 0xe6fff8,
-  roughness: 0.12,
-  metalness: 0.0,
-  transparent: true,
-  opacity: 0.08,
-  side: THREE.FrontSide,
-  depthWrite: false,
-  emissive: 0x7ad9c5,
-  emissiveIntensity: 0.05
-});
-
-// Rear bay glass - very transparent to show interior
-const MAT_BAY_GLASS = new THREE.MeshStandardMaterial({
-  color: 0xd6fff6,
-  roughness: 0.06,
-  metalness: 0.0,
-  transparent: true,
-  opacity: 0.03,
-  emissive: 0x22aa77,
-  emissiveIntensity: 0.12,
-  side: THREE.DoubleSide,
-  depthWrite: false
-});
-
-load(38);
-
-function setShadow(mesh) {
-  mesh.castShadow = ENABLE_SHADOWS;
-  mesh.receiveShadow = ENABLE_SHADOWS;
-  return mesh;
-}
-
-// =============================================
-//  SCENE ROOT
-// =============================================
-const ROOT = new THREE.Group();
-scene.add(ROOT);
-
-// =============================================
-//  SHELL (organic turtle body)
-// =============================================
-// Main ellipsoid body - deeper green
-const shellMesh = setShadow(new THREE.Mesh(new THREE.SphereGeometry(22, 64, 40), MAT_SHELL));
-shellMesh.scale.set(1.22, 0.76, 1.08);
-ROOT.add(shellMesh);
-
-// Carapace scutes (raised hexagonal plates) - larger, more organic
-const scuteDefs = [
-  // Central vertebral scutes
-  [ 3.0, 17.5,  0.0,  8.8, 1.90, 7.6, 2],
-  // Costal scutes (sides)
-  [ 1.0, 16.0, 11.2,  7.0, 1.45, 6.2, 1],
-  [ 1.0, 16.0,-11.2,  7.0, 1.45, 6.2, 1],
-  [12.5, 15.0, -7.5,  5.6, 1.15, 5.2, 0],
-  [12.5, 15.0,  7.5,  5.6, 1.15, 5.2, 0],
-  [-11.8,13.8,  7.0,  6.0, 1.10, 5.8, 0],
-  [-11.8,13.8, -7.0,  6.0, 1.10, 5.8, 0],
-  // Marginal scutes (edge)
-  [-4.0, 13.2, 16.2,  5.2, 1.05, 5.2, 2],
-  [-4.0, 13.2,-16.2,  5.2, 1.05, 5.2, 2],
-  [17.2, 11.5,  0.0,  5.0, 0.95, 4.8, 1],
-  [-18.0,10.4,  0.0,  4.4, 0.88, 4.2, 1],
-];
-const scuteMats = [MAT_SCUTE_DARK, MAT_SCUTE_MID, MAT_SCUTE_LITE];
-scuteDefs.forEach(d => {
-  const m = setShadow(new THREE.Mesh(new THREE.SphereGeometry(1, 12, 10), scuteMats[d[6]]));
-  m.scale.set(d[3], d[4], d[5]);
-  m.position.set(d[0], d[1], d[2]);
-  m.rotation.y = d[2] * 0.022;
-  m.rotation.z = d[0] * 0.008;
-  ROOT.add(m);
-});
-
-// Marginal rim plates around shell edge - more organic spacing
-for (let i = 0; i < 14; i++) {
-  const t = i / 14 * Math.PI * 2;
-  const plate = setShadow(new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), i % 2 ? MAT_SCUTE_DARK : MAT_SCUTE_MID));
-  plate.scale.set(3.2, 0.65, 4.1);
-  plate.position.set(Math.cos(t) * 22.0, 8.2 + Math.sin(t * 2) * 0.5, Math.sin(t) * 19.2);
-  plate.rotation.y = -t;
-  plate.rotation.z = Math.sin(t) * 0.15;
-  ROOT.add(plate);
-}
-
-// Growth line ridges on shell (organic detail)
-for (let i = 0; i < 5; i++) {
-  const ridge = new THREE.Mesh(
-    new THREE.TorusGeometry(14 + i * 1.8, 0.18, 8, 48, Math.PI * 1.4),
-    MAT_SCUTE_DARK
-  );
-  ridge.rotation.x = Math.PI / 2;
-  ridge.rotation.z = 0.3 + i * 0.15;
-  ridge.position.set(2 - i * 0.5, 14.5 - i * 1.5, 0);
-  ridge.scale.set(1.05, 0.82, 1.0);
-  ROOT.add(ridge);
-}
-
-// Shell surface sheen (subsurface scatter fake)
-const shellSheen = new THREE.Mesh(new THREE.SphereGeometry(20, 48, 26), new THREE.MeshStandardMaterial({
-  color: 0x5a8248,
-  roughness: 0.42,
-  metalness: 0.0,
-  transparent: true,
-  opacity: 0.07,
-  emissive: 0x0c1a0a,
-  emissiveIntensity: 0.03
-}));
-shellSheen.scale.set(1.14, 0.44, 0.98);
-shellSheen.position.set(2.0, 11.0, -0.8);
-ROOT.add(shellSheen);
-
-// Shell peak (central keel)
-const shellPeak = new THREE.Mesh(new THREE.SphereGeometry(1, 26, 18), M(0x4e6d3e, 0.78, 0.02));
-shellPeak.scale.set(16.0, 3.2, 12.2);
-shellPeak.position.set(1.5, 15.5, 0);
-ROOT.add(shellPeak);
-
-// Rear cap
-const rearCap = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), M(0x365428, 0.86, 0.02));
-rearCap.scale.set(7.2, 1.5, 6.5);
-rearCap.position.set(-23.8, 6.5, 0);
-ROOT.add(rearCap);
-
-// Shell belly (lighter plastron)
-const belly = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), M(0x8fa873, 0.88, 0.00));
-belly.scale.set(21.0, 0.65, 16.5);
-belly.position.set(1.5, -11.5, 0);
-ROOT.add(belly);
-
-// Belly detail (plastron scute lines)
-const bellyLine1 = new THREE.Mesh(new THREE.BoxGeometry(38, 0.08, 0.3), MAT_SKIN_SHADE);
-bellyLine1.position.set(1.5, -11.0, 0);
-ROOT.add(bellyLine1);
-[-5, 5].forEach(z => {
-  const line = new THREE.Mesh(new THREE.BoxGeometry(32, 0.08, 0.25), MAT_SKIN_SHADE);
-  line.position.set(1.0, -11.0, z);
-  ROOT.add(line);
-});
-
-// Rim band around shell edge - organic lip
-const rimBand = new THREE.Mesh(new THREE.TorusGeometry(22, 1.1, 14, 80), MAT_SCUTE_DARK);
-rimBand.scale.set(1.22, 1.0, 1.08);
-rimBand.rotation.x = Math.PI / 2;
-rimBand.position.y = -2.6;
-ROOT.add(rimBand);
-
-// Shell-body transition flesh (where shell meets skin)
-const shellFlesh = new THREE.Mesh(new THREE.TorusGeometry(23, 2.2, 12, 60), new THREE.MeshStandardMaterial({
-  color: 0x6a8a50,
-  roughness: 0.92,
-  metalness: 0.0,
-  transparent: true,
-  opacity: 0.55
-}));
-shellFlesh.scale.set(1.18, 0.4, 1.05);
-shellFlesh.rotation.x = Math.PI / 2;
-shellFlesh.position.y = -4.5;
-ROOT.add(shellFlesh);
-
-// =============================================
-//  REAR ENGINEERING BAY (panoramic window)
-// =============================================
-const rearWinGrp = new THREE.Group();
-rearWinGrp.position.set(-24.0, 10.8, 0);
-ROOT.add(rearWinGrp);
-
-// Deep recessed well carved into the shell (wider, taller)
-const rearWell = new THREE.Mesh(
-  new THREE.CylinderGeometry(8.2, 8.8, 10.0, 32, 1, true),
-  new THREE.MeshStandardMaterial({
-    color: 0x0c1a20,
-    roughness: 0.52,
-    metalness: 0.12,
-    side: THREE.DoubleSide
-  })
-);
-rearWell.rotation.z = Math.PI / 2;
-rearWell.position.x = 4.0;
-rearWell.scale.set(1.4, 0.7, 1.0);
-rearWinGrp.add(rearWell);
-
-// Organic flesh lip around the opening
-const rearFleshLip = new THREE.Mesh(new THREE.TorusGeometry(7.5, 1.2, 16, 48), MAT_SKIN_SHADE);
-rearFleshLip.rotation.y = Math.PI / 2;
-rearFleshLip.scale.set(1.62, 0.68, 1.0);
-rearWinGrp.add(rearFleshLip);
-
-// Gold structural ring
-const rearWinRing = new THREE.Mesh(new THREE.TorusGeometry(7.2, 0.48, 14, 48), MAT_GOLD);
-rearWinRing.rotation.y = Math.PI / 2;
-rearWinRing.scale.set(1.55, 0.62, 1.0);
-rearWinGrp.add(rearWinRing);
-
-// Copper inner ring
-const rearCopperRing = new THREE.Mesh(new THREE.TorusGeometry(6.8, 0.3, 12, 40), MAT_COPPER);
-rearCopperRing.rotation.y = Math.PI / 2;
-rearCopperRing.scale.set(1.5, 0.58, 1.0);
-rearWinGrp.add(rearCopperRing);
-
-// Glass pane (nearly invisible to show interior)
-const rearWinGlass = new THREE.Mesh(
-  new THREE.CircleGeometry(6.5, 32),
-  MAT_BAY_GLASS
-);
-rearWinGlass.rotation.y = Math.PI / 2;
-rearWinGlass.scale.set(1.52, 0.58, 1.0);
-rearWinGlass.position.x = 0.3;
-rearWinGrp.add(rearWinGlass);
-
-// Cross struts on window (D&D / steampunk feel)
-[-0.35, 0.35].forEach(ry => {
-  const strut = new THREE.Mesh(new THREE.BoxGeometry(0.12, 9.5, 0.2), MAT_COPPER);
-  strut.rotation.y = Math.PI / 2;
-  strut.rotation.z = ry;
-  strut.position.x = 0.2;
-  rearWinGrp.add(strut);
-});
-const hStrut = new THREE.Mesh(new THREE.BoxGeometry(0.12, 18.0, 0.2), MAT_COPPER);
-hStrut.rotation.y = Math.PI / 2;
-hStrut.rotation.x = Math.PI / 2;
-hStrut.position.x = 0.2;
-rearWinGrp.add(hStrut);
-
-// === ENGINEERING BAY INTERIOR ===
-const engineBay = new THREE.Group();
-engineBay.position.set(2.5, 0, 0);
-rearWinGrp.add(engineBay);
-
-// Back wall (deep interior)
-const engBack = new THREE.Mesh(new THREE.PlaneGeometry(16, 9.0), new THREE.MeshStandardMaterial({
-  color: 0x162838,
-  roughness: 0.72,
-  metalness: 0.14,
-  emissive: 0x081418,
-  emissiveIntensity: 0.08
-}));
-engBack.position.x = 14.0;
-engBack.rotation.y = Math.PI / 2;
-engineBay.add(engBack);
-
-// Floor with wood-plank detailing (D&D ship interior)
-const bayFloor = new THREE.Mesh(new THREE.BoxGeometry(13.0, 0.32, 12.0), new THREE.MeshStandardMaterial({
-  color: 0x5a3d1e,
-  roughness: 0.82,
-  metalness: 0.06,
-  emissive: 0x0a0500,
-  emissiveIntensity: 0.02
-}));
-bayFloor.position.set(7.5, -3.8, 0);
-engineBay.add(bayFloor);
-
-// Floor plank lines
-for (let i = -5; i <= 5; i++) {
-  const plank = new THREE.Mesh(new THREE.BoxGeometry(12.5, 0.04, 0.06), M(0x3a2510, 0.9, 0.0));
-  plank.position.set(7.5, -3.6, i * 1.05);
-  engineBay.add(plank);
-}
-
-// Ceiling (darker, industrial)
-const bayCeiling = new THREE.Mesh(new THREE.BoxGeometry(11.5, 0.22, 10.5), new THREE.MeshStandardMaterial({
-  color: 0x1e2a32,
-  roughness: 0.78,
-  metalness: 0.18,
-  emissive: 0x040810,
-  emissiveIntensity: 0.04
-}));
-bayCeiling.position.set(7.5, 3.8, 0);
-engineBay.add(bayCeiling);
-
-// Structural ribs (organic-meets-metal, like inside a whale/ship)
-for (let i = 0; i < 4; i++) {
-  const rib = new THREE.Mesh(new THREE.TorusGeometry(5.2, 0.18, 10, 32, Math.PI), new THREE.MeshStandardMaterial({
-    color: 0x5c6b56,
-    roughness: 0.65,
-    metalness: 0.22,
-    emissive: 0x0a1208,
-    emissiveIntensity: 0.04
-  }));
-  rib.rotation.z = Math.PI / 2;
-  rib.position.set(3.2 + i * 2.8, 0.5, 0);
-  engineBay.add(rib);
-}
-
-// Side walls (partial, to give depth)
-[-5.0, 5.0].forEach(z => {
-  const wall = new THREE.Mesh(new THREE.PlaneGeometry(12, 7.5), new THREE.MeshStandardMaterial({
-    color: 0x1a2822,
-    roughness: 0.82,
-    metalness: 0.08,
-    side: THREE.DoubleSide,
-    emissive: 0x060c08,
-    emissiveIntensity: 0.03
-  }));
-  wall.rotation.y = z > 0 ? -Math.PI / 2 : Math.PI / 2;
-  wall.position.set(7.5, 0, z);
-  engineBay.add(wall);
-});
-
-// === HAMSTER WHEELS (larger, closer to window, unmistakable) ===
-function buildHamsterWheel(z) {
-  const g = new THREE.Group();
-  g.position.set(1.8, -0.5, z);
-  g.scale.set(1.65, 1.65, 1.65);
-
-  // Main wheel ring (thick, visible)
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.22, 12, 28), MAT_GOLD);
-  ring.rotation.y = Math.PI / 2;
-  g.add(ring);
-
-  // Inner ring
-  const innerRing = new THREE.Mesh(new THREE.TorusGeometry(2.0, 0.1, 8, 24), MAT_STEEL);
-  innerRing.rotation.y = Math.PI / 2;
-  g.add(innerRing);
-
-  // Spokes (8 for more visibility)
-  for (let i = 0; i < 8; i++) {
-    const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.1, 4.5, 0.1), MAT_STEEL);
-    spoke.rotation.x = i * Math.PI / 4;
-    g.add(spoke);
-  }
-
-  // Tread surface (wider, more visible)
-  const tread = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, 1.4, 20, 1, true), new THREE.MeshStandardMaterial({
-    color: 0x4a5550,
-    roughness: 0.78,
-    metalness: 0.2,
-    side: THREE.DoubleSide,
-    emissive: 0x0a1210,
-    emissiveIntensity: 0.04
-  }));
-  tread.rotation.x = Math.PI / 2;
-  g.add(tread);
-
-  // Axle
-  const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 2.2, 8), MAT_DARK_STEEL);
-  axle.rotation.x = Math.PI / 2;
-  g.add(axle);
-
-  // Hamster! (bigger, more detailed)
-  const hamster = new THREE.Group();
-  hamster.position.set(0.0, 1.5, 0.0);
-
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 10), M(0xd4a060, 0.84, 0.0));
-  body.scale.set(1.3, 0.9, 0.88);
-  hamster.add(body);
-
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 10), M(0xeacfa0, 0.78, 0.0));
-  head.position.set(0.38, 0.08, 0);
-  hamster.add(head);
-
-  // Ears
-  [-0.12, 0.12].forEach(ez => {
-    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), M(0xf0c8a0, 0.8, 0.0));
-    ear.position.set(0.48, 0.22, ez);
-    hamster.add(ear);
-  });
-
-  // Eyes (tiny bright dots)
-  [-0.06, 0.06].forEach(ez => {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 6), M(0x111111, 0.2, 0.0, 0x000000, 0));
-    eye.position.set(0.52, 0.12, ez);
-    hamster.add(eye);
-  });
-
-  // Tiny legs
-  [[-0.15, -0.3, 0.15], [0.15, -0.3, 0.15], [-0.15, -0.3, -0.15], [0.15, -0.3, -0.15]].forEach(([lx, ly, lz]) => {
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.2, 6), M(0xd4a060, 0.84, 0.0));
-    leg.position.set(lx, ly, lz);
-    hamster.add(leg);
-  });
-
-  g.add(hamster);
-  engineBay.add(g);
-  return { g, hamster };
-}
-
-const wheelA = buildHamsterWheel(-2.5);
-const wheelB = buildHamsterWheel( 2.5);
-
-// Pipes (copper/brass - D&D steampunk feel)
-for (let i = 0; i < 6; i++) {
-  const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 7.0, 10), i % 2 ? MAT_COPPER : MAT_DARK_STEEL);
-  pipe.rotation.z = Math.PI / 2;
-  pipe.position.set(8.0, -2.8 + i * 1.25, (i % 2 === 0 ? -1 : 1) * 3.8);
-  engineBay.add(pipe);
-}
-
-// Glowing core (magical power source - D&D fantasy)
-const coreGlow = new THREE.Mesh(new THREE.SphereGeometry(1.1, 18, 14), new THREE.MeshStandardMaterial({
-  color: 0x44ffaa,
-  emissive: 0x22ff88,
-  emissiveIntensity: 2.5,
-  transparent: true,
-  opacity: 0.65
-}));
-coreGlow.position.set(10.5, -0.5, 0);
-engineBay.add(coreGlow);
-
-// Core halo
-const coreHalo = new THREE.Mesh(new THREE.SphereGeometry(2.0, 14, 10), new THREE.MeshStandardMaterial({
-  color: 0x22ff88,
-  emissive: 0x11cc55,
-  emissiveIntensity: 0.8,
-  transparent: true,
-  opacity: 0.12,
-  side: THREE.DoubleSide,
-  depthWrite: false
-}));
-coreHalo.position.copy(coreGlow.position);
-engineBay.add(coreHalo);
-
-// Monitors and readouts
-for (let i = 0; i < 4; i++) {
-  const monitor = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.6), new THREE.MeshBasicMaterial({
-    color: [0x67ffd3, 0xffb45b, 0x67ffd3, 0xff6688][i],
-    transparent: true,
-    opacity: 0.72
-  }));
-  monitor.position.set(9.0, 2.2 - i * 1.2, -4.0 + i * 2.6);
-  monitor.rotation.y = Math.PI / 2;
-  engineBay.add(monitor);
-}
-
-// Lanterns hanging from ceiling (D&D interior feel)
-[-2.8, 2.8].forEach(lz => {
-  const chain = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.5, 6), MAT_DARK_STEEL);
-  chain.position.set(4.5, 2.8, lz);
-  engineBay.add(chain);
-
-  const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8), MAT_GLOW_WARM);
-  lantern.position.set(4.5, 1.8, lz);
-  engineBay.add(lantern);
-});
-
-// Strong interior light right near the window
-const bayLight = new THREE.PointLight(0x88ffd0, 3.5, 28);
-bayLight.position.set(3.5, 0.5, 0);
-engineBay.add(bayLight);
-
-// Additional warm light deeper inside
-const bayDeepLight = new THREE.PointLight(0xffcc88, 2.2, 22);
-bayDeepLight.position.set(9.0, 1.0, 0);
-engineBay.add(bayDeepLight);
-
-// =============================================
-//  FLIPPERS (4x - long, graceful sea turtle style)
-// =============================================
-function addFlipper(x, y, z, side, front) {
-  const grp = new THREE.Group();
-  grp.position.set(x, y, z);
-  grp.rotation.z = side * 0.06;
-  ROOT.add(grp);
-
-  // Shoulder joint (fleshy connection to body)
-  const shoulder = setShadow(new THREE.Mesh(new THREE.SphereGeometry(1, 20, 16), MAT_SKIN_SHADE));
-  shoulder.scale.set(front ? 2.6 : 1.9, front ? 1.4 : 1.15, front ? 1.9 : 1.5);
-  grp.add(shoulder);
-
-  // Upper arm
-  const upper = setShadow(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), MAT_SKIN));
-  upper.scale.set(front ? 5.5 : 3.2, front ? 1.0 : 0.8, front ? 2.8 : 1.8);
-  upper.position.set(front ? 2.5 : -0.6, front ? -1.2 : -0.9, side * (front ? 4.2 : 2.4));
-  upper.rotation.y = side * (front ? 0.72 : 0.55);
-  grp.add(upper);
-
-  // Main fin blade (long, tapered, paddle-shaped)
-  const fin = setShadow(new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), MAT_SKIN));
-  fin.scale.set(front ? 15.0 : 8.5, front ? 0.55 : 0.45, front ? 5.0 : 3.0);
-  fin.position.set(front ? 7.5 : -1.5, front ? -2.8 : -2.2, side * (front ? 10.0 : 5.5));
-  fin.rotation.y = side * (front ? 0.88 : 0.65);
-  fin.rotation.z = side * (front ? -0.04 : -0.02);
-  fin.rotation.x = front ? 0.06 : 0.03;
-  grp.add(fin);
-
-  // Finger ridges on front flippers (sea turtle anatomy)
-  if (front) {
-    for (let r = 0; r < 4; r++) {
-      const ridge = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), MAT_SKIN_SHADE);
-      ridge.scale.set(8.0 - r * 1.5, 0.18, 0.6);
-      ridge.position.set(
-        10.0 + r * 1.2,
-        -2.7,
-        side * (8.0 + r * 1.8)
-      );
-      ridge.rotation.y = side * (0.88 + r * 0.04);
-      grp.add(ridge);
-    }
-  }
-
-  // Tip (tapered end)
-  const tip = setShadow(new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), MAT_SKIN_SPOT));
-  tip.scale.set(front ? 5.0 : 2.8, 0.18, front ? 2.0 : 1.1);
-  tip.position.set(front ? 14.0 : -5.2, front ? -2.85 : -2.35, side * (front ? 16.0 : 7.5));
-  tip.rotation.y = side * (front ? 0.88 : 0.65);
-  tip.rotation.z = side * (front ? -0.03 : -0.02);
-  grp.add(tip);
-
-  // Skin spots on flippers
-  for (let s = 0; s < (front ? 5 : 2); s++) {
-    const spot = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), MAT_SKIN_SPOT);
-    const st = 0.3 + s * 0.14;
-    spot.scale.set(front ? 1.4 : 0.8, 0.12, front ? 0.9 : 0.5);
-    spot.position.set(
-      front ? 3 + s * 3.0 : -1 - s * 1.5,
-      front ? -2.4 : -1.9,
-      side * (front ? 5 + s * 2.5 : 3 + s * 1.8)
-    );
-    spot.rotation.y = side * (front ? 0.88 : 0.65);
-    grp.add(spot);
-  }
-
-  return { grp, fin, tip, upper };
-}
-const legFR = addFlipper( 9.8, -7.8,  13.2,  1, true);
-const legFL = addFlipper( 9.8, -7.8, -13.2, -1, true);
-const legBR = addFlipper(-16.6, -9.2,  9.2,  1, false);
-const legBL = addFlipper(-16.6, -9.2, -9.2, -1, false);
-
-// Short stubby tail
-const tailGrp = new THREE.Group();
-tailGrp.position.set(-26, -5, 0);
-ROOT.add(tailGrp);
-const tail = new THREE.Mesh(new THREE.ConeGeometry(1.8, 5.5, 10), MAT_SKIN_SHADE);
-tail.rotation.z = Math.PI / 2 + 0.3;
-tailGrp.add(tail);
-
-// =============================================
-//  DOME + PLATFORM
-// =============================================
-const platGeo = new THREE.CylinderGeometry(11.4, 12.6, 3.0, 40);
-const platMesh = setShadow(new THREE.Mesh(platGeo, MAT_DARK_STEEL));
-platMesh.position.set(0, 15.0, 0);
-ROOT.add(platMesh);
-
-const platTrim = new THREE.Mesh(new THREE.TorusGeometry(11.8, 0.55, 12, 60), MAT_GOLD);
-platTrim.rotation.x = Math.PI / 2;
-platTrim.position.set(0, 16.55, 0);
-ROOT.add(platTrim);
-
-// Bolts around platform edge
-for (let i = 0; i < 16; i++) {
-  const t = (i / 16) * Math.PI * 2;
-  const bolt = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 6), MAT_COPPER);
-  bolt.position.set(Math.sin(t) * 12.0, 16.55, Math.cos(t) * 12.0);
-  ROOT.add(bolt);
-}
-
-const domeGeo = new THREE.SphereGeometry(11.8, 52, 30, 0, Math.PI * 2, 0, Math.PI / 2);
-const domeMesh = new THREE.Mesh(domeGeo, MAT_GLASS);
-domeMesh.position.set(0, 16.4, 0);
-ROOT.add(domeMesh);
-
-const domeSheen = new THREE.Mesh(
-  new THREE.SphereGeometry(11.92, 52, 30, 0, Math.PI * 2, 0, Math.PI / 2),
-  MAT_GLASS_SHEEN
-);
-domeSheen.position.copy(domeMesh.position);
-domeSheen.rotation.y = 0.12;
-ROOT.add(domeSheen);
-
-// Dome struts (6 arching ribs)
-for (let i = 0; i < 6; i++) {
-  const strutGeo = new THREE.CylinderGeometry(0.16, 0.16, 12.5, 8);
-  const strut = new THREE.Mesh(strutGeo, MAT_STEEL);
-  strut.position.set(0, 16.35, 0);
-  strut.rotation.z = (i / 6) * Math.PI;
-  strut.rotation.x = 0.55;
-  ROOT.add(strut);
-}
-
-const baseRing = new THREE.Mesh(new THREE.TorusGeometry(11.5, 0.55, 14, 60), MAT_STEEL);
-baseRing.rotation.x = Math.PI / 2;
-baseRing.position.set(0, 16.35, 0);
-ROOT.add(baseRing);
-
-// Dome interior glow
-const igGeo = new THREE.SphereGeometry(10.4, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2);
-const igMesh = new THREE.Mesh(igGeo, new THREE.MeshStandardMaterial({
-  color: 0x00ffaa, emissive: 0x00ee88, emissiveIntensity: 0.55,
-  transparent: true, opacity: 0.10, side: THREE.BackSide
-}));
-igMesh.position.set(0, 16.7, 0);
-ROOT.add(igMesh);
-
-const cabinDeck = new THREE.Mesh(
-  new THREE.CylinderGeometry(8.6, 9.4, 1.1, 24),
-  M(0x31404a, 0.72, 0.32, 0x051018, 0.02)
-);
-cabinDeck.position.set(0, 16.5, 0);
-ROOT.add(cabinDeck);
-
-const frontConsole = new THREE.Mesh(new THREE.BoxGeometry(5.4, 1.6, 2.2), MAT_DARK_STEEL);
-frontConsole.position.set(3.0, 17.0, 0);
-frontConsole.rotation.z = -0.2;
-ROOT.add(frontConsole);
-
-const consoleGlow = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.7), new THREE.MeshBasicMaterial({
-  color: 0x67ffd3, transparent: true, opacity: 0.75
-}));
-consoleGlow.position.set(4.7, 17.5, 0);
-consoleGlow.rotation.y = Math.PI / 2;
-consoleGlow.rotation.z = -0.2;
-ROOT.add(consoleGlow);
-
-// Helm wheel (D&D ship wheel in dome)
-const helmWheel = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.12, 8, 18), MAT_WOOD);
-helmWheel.position.set(5.5, 18.0, 0);
-helmWheel.rotation.y = Math.PI / 2;
-ROOT.add(helmWheel);
-for (let i = 0; i < 6; i++) {
-  const helmSpoke = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.0, 6), MAT_WOOD);
-  helmSpoke.position.copy(helmWheel.position);
-  helmSpoke.rotation.y = Math.PI / 2;
-  helmSpoke.rotation.z = i * Math.PI / 3;
-  ROOT.add(helmSpoke);
-}
-
-// Crew silhouettes
-const crewCabin = new THREE.Group();
-crewCabin.position.set(0, 16.8, 0);
-ROOT.add(crewCabin);
-
-function addCrewSilhouette(x, z, tint, kind) {
-  const actor = new THREE.Group();
-  actor.scale.set(1.18, 1.18, 1.18);
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.68, 3.2, 10), M(tint, 0.88, 0.02));
-  body.position.y = 1.65;
-  actor.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.78, 12, 10), M(0xd7d3c8, 0.82, 0.0));
-  head.position.y = 3.85;
-  actor.add(head);
-  const shoulders = new THREE.Mesh(new THREE.SphereGeometry(0.58, 10, 8), M(tint, 0.84, 0.01));
-  shoulders.scale.set(2.2, 0.55, 1.2);
-  shoulders.position.y = 2.55;
-  actor.add(shoulders);
-  if (kind === 'wizard') {
-    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.88, 1.9, 10), M(0x5b305a, 0.82, 0.02));
-    hat.position.y = 5.0;
-    actor.add(hat);
-    const sword = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3.4, 0.24), MAT_GLOW_BLUE);
-    sword.position.set(-0.9, 2.2, 0.45);
-    sword.rotation.z = 0.28;
-    actor.add(sword);
-  }
-  if (kind === 'cat') {
-    [-0.28, 0.28].forEach(sign => {
-      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.54, 6), M(0xc59b67, 0.8, 0.0));
-      ear.position.set(sign * 1.15, 4.55, sign * 0.06);
-      actor.add(ear);
-    });
-    const rapier = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.8, 0.08), MAT_STEEL);
-    rapier.position.set(0.85, 2.0, -0.4);
-    rapier.rotation.z = -0.45;
-    actor.add(rapier);
-    // Cape (Puss in Boots swagger)
-    const cape = new THREE.Mesh(new THREE.ConeGeometry(0.8, 2.2, 8), M(0x8b1a1a, 0.72, 0.02));
-    cape.position.set(-0.3, 1.2, 0);
-    cape.rotation.z = 0.15;
-    actor.add(cape);
-  }
-  if (kind === 'monk') {
-    const fists = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), M(0xd7d3c8, 0.82, 0.0));
-    fists.position.set(0.92, 2.6, 0.42);
-    actor.add(fists);
-    const fist2 = fists.clone();
-    fist2.position.set(0.92, 2.4, -0.42);
-    actor.add(fist2);
-    // Headband
-    const band = new THREE.Mesh(new THREE.TorusGeometry(0.82, 0.08, 6, 16), M(0xffcc33, 0.5, 0.1));
-    band.position.y = 3.85;
-    band.rotation.x = Math.PI / 2;
-    actor.add(band);
-  }
-  if (kind === 'fighter') {
-    const pauldron = new THREE.Mesh(new THREE.SphereGeometry(0.38, 8, 8), MAT_GOLD);
-    pauldron.position.set(0.72, 2.8, 0.55);
-    actor.add(pauldron);
-    const pauldron2 = pauldron.clone();
-    pauldron2.position.set(0.72, 2.8, -0.55);
-    actor.add(pauldron2);
-    // Beer mug in hand
-    const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 0.5, 8), MAT_GOLD);
-    mug.position.set(1.1, 2.2, 0.5);
-    actor.add(mug);
-  }
-  actor.position.set(x, 0, z);
-  crewCabin.add(actor);
-  return actor;
-}
-
-const crewActors = [
-  addCrewSilhouette( 2.8, -2.1, 0xc9a15c, 'fighter'),
-  addCrewSilhouette( 1.7,  1.9, 0x4f79c8, 'monk'),
-  addCrewSilhouette(-1.4, -1.8, 0x7e4e92, 'wizard'),
-  addCrewSilhouette(-2.5,  1.9, 0xc68358, 'cat')
-];
-
-// =============================================
-//  FRONT HATCH (recessed into shell body)
-// =============================================
-// The hatch is carved INTO the shell where neck meets carapace
-// It's a deep well with organic shell walls, not a flat overlay
-(function buildFrontHatch() {
-  const hatchGrp = new THREE.Group();
-  hatchGrp.position.set(18.5, 11.2, 0);
-  hatchGrp.rotation.z = -0.35;
-  hatchGrp.rotation.x = 0.0;
-  ROOT.add(hatchGrp);
-
-  // Deep recessed well (carved into shell)
-  const well = new THREE.Mesh(
-    new THREE.CylinderGeometry(2.6, 2.2, 4.5, 24, 1, true),
-    new THREE.MeshStandardMaterial({
-      color: 0x2a3d22,
-      roughness: 0.92,
-      metalness: 0.0,
-      side: THREE.DoubleSide
-    })
-  );
-  hatchGrp.add(well);
-
-  // Organic flesh lip around the opening (like shell growth around a hole)
-  const fleshRim = new THREE.Mesh(new THREE.TorusGeometry(2.75, 0.65, 12, 28), MAT_SKIN_SHADE);
-  fleshRim.rotation.x = Math.PI / 2;
-  fleshRim.position.y = 0.2;
-  hatchGrp.add(fleshRim);
-
-  // Secondary callus ring (thickened shell edge, like a real turtle wound healed over)
-  const callusRing = new THREE.Mesh(new THREE.TorusGeometry(2.9, 0.35, 10, 24), MAT_SCUTE_DARK);
-  callusRing.rotation.x = Math.PI / 2;
-  callusRing.position.y = 0.5;
-  hatchGrp.add(callusRing);
-
-  // Gold structural trim (the D&D conversion part)
-  const goldRim = new THREE.Mesh(new THREE.TorusGeometry(2.5, 0.18, 10, 32), MAT_GOLD);
-  goldRim.rotation.x = Math.PI / 2;
-  goldRim.position.y = 0.15;
-  hatchGrp.add(goldRim);
-
-  // Dark interior (the hole goes deep into the turtle)
-  const interior = new THREE.Mesh(new THREE.CircleGeometry(2.1, 24), new THREE.MeshBasicMaterial({
-    color: 0x040e08
-  }));
-  interior.rotation.x = Math.PI / 2;
-  interior.position.y = -2.2;
-  hatchGrp.add(interior);
-
-  // Warm glow from inside (light from the interior cabin)
-  const hatchGlow = new THREE.Mesh(new THREE.CircleGeometry(1.8, 20), new THREE.MeshStandardMaterial({
-    color: 0xffcc44,
-    emissive: 0xffaa22,
-    emissiveIntensity: 1.8,
-    transparent: true,
-    opacity: 0.35
-  }));
-  hatchGlow.rotation.x = Math.PI / 2;
-  hatchGlow.position.y = -1.8;
-  hatchGrp.add(hatchGlow);
-
-  // Ladder rungs visible inside
-  for (let i = 0; i < 3; i++) {
-    const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.8, 6), MAT_COPPER);
-    rung.rotation.y = Math.PI / 2;
-    rung.position.y = -0.3 - i * 0.7;
-    rung.position.x = -0.4;
-    hatchGrp.add(rung);
-  }
-
-  // Hatch door (propped open, leaning back)
-  const door = new THREE.Mesh(new THREE.CircleGeometry(2.3, 24), new THREE.MeshStandardMaterial({
-    color: 0x3a5430,
-    roughness: 0.85,
-    metalness: 0.05
-  }));
-  door.rotation.x = -0.4;
-  door.position.set(0.8, 1.8, 0);
-  hatchGrp.add(door);
-
-  // Door handle
-  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.08, 8, 16), MAT_GOLD);
-  handle.rotation.x = -0.4;
-  handle.position.set(0.8, 2.0, 0);
-  hatchGrp.add(handle);
-
-  // Small light above hatch
-  const hatchLight = new THREE.PointLight(0xffcc44, 1.5, 12);
-  hatchLight.position.set(0, -0.5, 0);
-  hatchGrp.add(hatchLight);
-})();
-
-// =============================================
-//  PERISCOPE
-// =============================================
-const periShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 18.0, 18), MAT_STEEL);
-periShaft.position.set(-14.0, 26.5, 0);
-ROOT.add(periShaft);
-
-// Periscope rings
-for (let i = 0; i < 4; i++) {
-  const pr = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.15, 8, 18), MAT_DARK_STEEL);
-  pr.position.set(-14.0, 19.0 + i * 4.5, 0);
-  pr.rotation.x = Math.PI / 2;
-  ROOT.add(pr);
-}
-
-const periHead = new THREE.Mesh(new THREE.BoxGeometry(5.0, 3.5, 5.8), MAT_DARK_STEEL);
-periHead.position.set(-14.0, 36.2, 0);
-ROOT.add(periHead);
-
-const periLens = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.6, 20), MAT_GLOW_BLUE);
-periLens.rotation.z = Math.PI / 2;
-periLens.position.set(-11.2, 36.2, 0);
-ROOT.add(periLens);
-
-// =============================================
-//  NECK (spline tube from shell to head)
-// =============================================
-const neckPoints = [];
-for (let i = 0; i <= 20; i++) {
-  const t = i / 20;
-  neckPoints.push(new THREE.Vector3(
-    15 + t * 25,
-    -1.5 + Math.sin(t * Math.PI * 0.85) * 8.5,
-    0
-  ));
-}
-const neckCurve = new THREE.CatmullRomCurve3(neckPoints);
-const neckGeo = new THREE.TubeGeometry(neckCurve, 32, 4.4, 16, false);
-const neckMesh = setShadow(new THREE.Mesh(neckGeo, MAT_SKIN));
-ROOT.add(neckMesh);
-
-// Neck wrinkle rings (organic detail)
-for (let i = 0; i < 7; i++) {
-  const t = 0.12 + i * 0.12;
-  const p = neckCurve.getPoint(t);
-  const tangent = neckCurve.getTangent(t).normalize();
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(4.2, 0.22, 8, 20), MAT_SKIN_SHADE);
-  ring.position.copy(p);
-  ring.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangent);
-  ring.rotation.y += Math.PI / 2;
-  ROOT.add(ring);
-}
-
-// Skin spots on neck
-for (let i = 0; i < 6; i++) {
-  const t = 0.15 + i * 0.13;
-  const p = neckCurve.getPoint(t);
-  const spot = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), MAT_SKIN_SPOT);
-  spot.scale.set(1.2, 0.4, 1.0);
-  spot.position.set(p.x + (i % 2 ? 1.5 : -1.5), p.y + 1.5, p.z + (i % 3 - 1) * 2.5);
-  ROOT.add(spot);
-}
-
-// =============================================
-//  HEAD
-// =============================================
-const headGrp = new THREE.Group();
-headGrp.position.set(44, 4, 0);
-ROOT.add(headGrp);
-
-// Head blob (rounder, more Crush-like)
-const headMesh = setShadow(new THREE.Mesh(new THREE.SphereGeometry(9.5, 52, 36), MAT_SKIN));
-headMesh.scale.set(1.22, 0.98, 1.10);
-headGrp.add(headMesh);
-
-// Brow ridge (prominent, gives Crush his chill squint)
-const brow = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), M(0x2a6838, 0.84, 0.0));
-brow.scale.set(9.5, 2.0, 2.8);
-brow.position.set(4, 6.2, 0);
-brow.rotation.z = -0.12;
-headGrp.add(brow);
-
-// Cheek areas (rounder, friendlier)
-const cheekShadow = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), new THREE.MeshStandardMaterial({
-  color: 0x14301e,
-  roughness: 0.92,
-  metalness: 0,
-  transparent: true,
-  opacity: 0.24
-}));
-cheekShadow.scale.set(6.8, 1.6, 4.8);
-cheekShadow.position.set(7.8, -2.2, 0);
-cheekShadow.rotation.z = -0.1;
-headGrp.add(cheekShadow);
-
-// Smile creases
-[-3.5, 3.5].forEach(sz => {
-  const crease = new THREE.Mesh(new THREE.TorusGeometry(2.5, 0.15, 6, 14, Math.PI * 0.5), MAT_SKIN_SHADE);
-  crease.position.set(9.5, -3.5, sz);
-  crease.rotation.y = sz > 0 ? 0.3 : -0.3;
-  crease.rotation.z = -0.3;
-  headGrp.add(crease);
-});
-
-// Eyes - big Crush style (wider, more expressive)
-function buildEye(sideZ) {
-  const grp = new THREE.Group();
-
-  const sclera = new THREE.Mesh(new THREE.SphereGeometry(2.8, 30, 22), MAT_SCLERA);
-  grp.add(sclera);
-
-  const iris = new THREE.Mesh(new THREE.SphereGeometry(2.15, 24, 18), MAT_IRIS);
-  iris.position.set(0.8, 0, 0);
-  grp.add(iris);
-
-  const pupil = new THREE.Mesh(new THREE.SphereGeometry(1.35, 18, 14), MAT_PUPIL);
-  pupil.position.set(1.2, 0, 0);
-  grp.add(pupil);
-
-  // Double gleam (more alive)
-  const gleam = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 8), MAT_GLEAM);
-  gleam.position.set(1.65, 1.05, 0.55);
-  grp.add(gleam);
-
-  const gleam2 = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 6), MAT_GLEAM);
-  gleam2.position.set(1.4, -0.6, -0.3);
-  grp.add(gleam2);
-
-  // Heavy chill brow (Crush's signature half-lidded look)
-  const browEGeo = new THREE.TorusGeometry(2.6, 0.55, 8, 22, Math.PI * 0.7);
-  const browE = new THREE.Mesh(browEGeo, M(0x1d6e34, 0.70, 0.06));
-  browE.position.set(0.3, 2.7, 0);
-  browE.rotation.z = sideZ > 0 ? 0.28 : -0.28;
-  grp.add(browE);
-
-  // Lower eyelid (gives the squinty chill look)
-  const lowerLid = new THREE.Mesh(
-    new THREE.TorusGeometry(2.4, 0.35, 8, 18, Math.PI * 0.5),
-    M(0x1d5e34, 0.75, 0.04)
-  );
-  lowerLid.position.set(0.3, -2.3, 0);
-  lowerLid.rotation.z = sideZ > 0 ? -0.2 : 0.2;
-  lowerLid.rotation.x = Math.PI;
-  grp.add(lowerLid);
-
-  grp.position.set(8.2, 2.8, sideZ * 4.6);
-  return { grp, iris, pupil, gleam };
-}
-const eyeR = buildEye(1);
-const eyeL = buildEye(-1);
-headGrp.add(eyeR.grp);
-headGrp.add(eyeL.grp);
-
-// Lower jaw
-const jaw = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), M(0x24573a, 0.84, 0.0));
-jaw.scale.set(6.8, 0.9, 5.0);
-jaw.position.set(7, -6.3, 0);
-headGrp.add(jaw);
-
-// Wide grin (Crush's signature smile)
-const grinCurve = new THREE.CatmullRomCurve3([
-  new THREE.Vector3(5.5, -5.2, 4.5),
-  new THREE.Vector3(9.0, -5.8, 3.0),
-  new THREE.Vector3(10.5, -5.5, 0),
-  new THREE.Vector3(9.0, -5.8, -3.0),
-  new THREE.Vector3(5.5, -5.2, -4.5),
-]);
-const grinTube = new THREE.TubeGeometry(grinCurve, 20, 0.22, 8, false);
-headGrp.add(new THREE.Mesh(grinTube, M(0x0a1a0e, 0.9, 0.0)));
-
-// Tongue
-const tongue = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), MAT_TONGUE);
-tongue.scale.set(3.5, 0.55, 2.5);
-tongue.position.set(9.2, -6.0, 0);
-headGrp.add(tongue);
-
-const mouthMarker = new THREE.Object3D();
-mouthMarker.position.set(11.8, -4.5, 0);
-headGrp.add(mouthMarker);
-
-// Nostrils
-[-1.5, 1.5].forEach(nz => {
-  const n = new THREE.Mesh(new THREE.SphereGeometry(0.65, 10, 8), M(0x0a1a0e, 0.9, 0.0));
-  n.position.set(10.5, -1.8, nz);
-  headGrp.add(n);
-});
-
-// Skin spots on head
-[
-  [6.2, -1.1, 5.4, 1.3, 0.55, 1.1],
-  [5.8, -1.7, -5.6, 1.0, 0.45, 0.9],
-  [3.1, 0.5, 6.8, 0.9, 0.38, 0.8],
-  [2.8, -0.2, -7.0, 0.9, 0.38, 0.8],
-  [1.5, 3.0, 5.5, 0.7, 0.3, 0.6],
-  [0.5, 2.5, -6.0, 0.6, 0.25, 0.5],
-  [-2.0, 1.0, 4.8, 0.8, 0.3, 0.7],
-  [-3.0, -1.5, -4.2, 0.7, 0.28, 0.6],
-].forEach(([x, y, z, sx, sy, sz]) => {
-  const spot = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), MAT_SKIN_SPOT);
-  spot.scale.set(sx, sy, sz);
-  spot.position.set(x, y, z);
-  headGrp.add(spot);
-});
-
-// =============================================
-//  PROPELLER HAT
-// =============================================
-const hatGrp = new THREE.Group();
-hatGrp.position.set(4.4, 11.8, 0);
-hatGrp.rotation.z = -0.08;
-headGrp.add(hatGrp);
-
-const hatBrim = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 0.65, 36), MAT_RED);
-hatGrp.add(hatBrim);
-
-const hatCrown = new THREE.Mesh(new THREE.CylinderGeometry(2.9, 3.1, 4.2, 36), MAT_RED);
-hatCrown.position.y = 2.4;
-hatGrp.add(hatCrown);
-
-// Hat stripes (beanie detail)
-[0.8, 1.6, 2.4, 3.2].forEach(py => {
-  const stripe = new THREE.Mesh(new THREE.TorusGeometry(3.0, 0.12, 6, 24), M(0xffffff, 0.5, 0.0));
-  stripe.rotation.x = Math.PI / 2;
-  stripe.position.y = py;
-  hatGrp.add(stripe);
-});
-
-const hatCap = new THREE.Mesh(new THREE.CylinderGeometry(2.9, 2.9, 0.5, 36), MAT_RED);
-hatCap.position.y = 4.7;
-hatGrp.add(hatCap);
-
-const hubPin = new THREE.Mesh(new THREE.SphereGeometry(0.75, 14, 10), MAT_GOLD);
-hubPin.position.y = 5.2;
-hatGrp.add(hubPin);
-
-const bladeGrp = new THREE.Group();
-bladeGrp.position.y = 5.2;
-hatGrp.add(bladeGrp);
-
-for (let b = 0; b < 4; b++) {
-  const pivot = new THREE.Group();
-  pivot.rotation.y = b * (Math.PI * 2 / 4);
-  const colors = [MAT_PINK, MAT_GLOW_BLUE, MAT_GLOW_GOLD, MAT_GLOW_GREEN];
-  const bm = new THREE.Mesh(new THREE.BoxGeometry(10.5, 0.32, 2.4), colors[b]);
-  bm.position.x = 5.25;
-  pivot.add(bm);
-  bladeGrp.add(pivot);
-}
-
-load(55);
-
-// =============================================
-//  MEGAPHONE
-// =============================================
-const megGrp = new THREE.Group();
-megGrp.position.set(7.2, 16.8, 9.4);
-megGrp.rotation.y = -0.06;
-megGrp.scale.set(0.54, 0.54, 0.54);
-ROOT.add(megGrp);
-
-const megBody = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 3.2, 10, 24), MAT_GOLD);
-megBody.rotation.z = Math.PI / 2;
-megBody.position.x = 3;
-megGrp.add(megBody);
-
-const megBell = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 6.0, 5, 24), MAT_GOLD);
-megBell.rotation.z = Math.PI / 2;
-megBell.position.x = 10.5;
-megGrp.add(megBell);
-
-const megBracket = new THREE.Mesh(new THREE.BoxGeometry(3.5, 1.2, 5.8), MAT_DARK_STEEL);
-megBracket.position.set(0.6, -2.0, 0);
-megGrp.add(megBracket);
-
-const megBase = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.6, 1.5, 18), MAT_DARK_STEEL);
-megBase.position.set(-0.8, -2.55, 0);
-megGrp.add(megBase);
-
-const megRim = new THREE.Mesh(new THREE.TorusGeometry(6.0, 0.38, 12, 48), MAT_GLOW_GOLD);
-megRim.rotation.y = Math.PI / 2;
-megRim.position.x = 13;
-megGrp.add(megRim);
-
-// =============================================
-//  SLINGSHOT
-// =============================================
-const slGrp = new THREE.Group();
-slGrp.position.set(11.8, 23.2, 0);
-slGrp.rotation.z = -0.08;
-ROOT.add(slGrp);
-
-const slBase = new THREE.Mesh(new THREE.CylinderGeometry(3.1, 3.8, 1.8, 18), MAT_DARK_STEEL);
-slBase.position.set(0, -4.2, 0);
-slGrp.add(slBase);
-
-[-1, 1].forEach(side => {
-  const brace = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 9.4, 10), MAT_STEEL);
-  brace.position.set(-0.8, -0.4, side * 2.8);
-  brace.rotation.z = 0.48;
-  brace.rotation.x = side * 0.18;
-  slGrp.add(brace);
-});
-
-[[-4.2, 0.34], [4.2, -0.34]].forEach(([pz, rx]) => {
-  const pm = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.56, 12.8, 10), MAT_WOOD);
-  pm.position.set(0, 6.3, pz);
-  pm.rotation.x = rx;
-  slGrp.add(pm);
-});
-
-const slHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.72, 0.88, 8.5, 12), MAT_WOOD);
-slHandle.position.set(0, -1.0, 0);
-slGrp.add(slHandle);
-
-const bandPts = [
-  new THREE.Vector3(0, 12.3, -4.2),
-  new THREE.Vector3(0, 8.9, 0),
-  new THREE.Vector3(0, 12.3, 4.2)
-];
-const bandTube = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(bandPts), 18, 0.22, 8, false);
-slGrp.add(new THREE.Mesh(bandTube, M(0xcc5500, 0.65, 0.08, 0x882200, 0.4)));
-
-const ammoBall = new THREE.Group();
-ammoBall.position.set(0, 8.9, 0);
-[
-  [0, 0, 0, 1.2],
-  [0.7, 0.2, -0.1, 0.7],
-  [-0.6, -0.15, 0.4, 0.55],
-  [0.15, -0.45, 0.65, 0.42]
-].forEach(([x, y, z, s]) => {
-  const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0), M(0x727a73, 0.96, 0.02));
-  rock.position.set(x, y, z);
-  rock.rotation.set(x * 0.6, y * 0.9, z * 0.8);
-  ammoBall.add(rock);
-});
-const ammoGlow = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 10), new THREE.MeshStandardMaterial({
-  color: 0x7fcaa2, emissive: 0x4dff9f, emissiveIntensity: 0.25,
-  transparent: true, opacity: 0.22
-}));
-ammoBall.add(ammoGlow);
+composer.addPass(filmPass);
+
+window.addEventListener('resize',()=>{camera.aspect=W()/H();camera.fov=Math.min(W(),H())<760?58:50;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(window.devicePixelRatio,Math.min(W(),H())<760?1.35:DPR_CAP));renderer.setSize(W(),H());composer.setSize(W(),H());bloomPass.resolution.set(W(),H());camRadius=Math.min(W(),H())<760?154:170;zoomTarget=clamp(zoomTarget,Math.min(W(),H())<760?96:110,MAX_RADIUS)});
+load(25);
+
+// LIGHTING
+scene.add(new THREE.AmbientLight(0x1a2833,.55));
+const kl=new THREE.DirectionalLight(0xffefdb,2.1);kl.position.set(60,90,70);kl.castShadow=ENABLE_SHADOWS;kl.shadow.mapSize.set(LOW_POWER?1024:2048,LOW_POWER?1024:2048);kl.shadow.camera.near=1;kl.shadow.camera.far=300;kl.shadow.camera.left=kl.shadow.camera.bottom=-70;kl.shadow.camera.right=kl.shadow.camera.top=70;kl.shadow.bias=-.001;scene.add(kl);
+scene.add(Object.assign(new THREE.DirectionalLight(0x58d7c0,.55),{position:new THREE.Vector3(-70,30,50)}));
+scene.add(Object.assign(new THREE.DirectionalLight(0x2f5ae2,.82),{position:new THREE.Vector3(-40,10,-120)}));
+scene.add(Object.assign(new THREE.DirectionalLight(0x1a5c32,.22),{position:new THREE.Vector3(0,-60,30)}));
+const domeGL=new THREE.PointLight(0x55ffcc,1.6,50);domeGL.position.set(0,24,0);scene.add(domeGL);
+const cgl1=new THREE.PointLight(0xff8c33,3.5,48);cgl1.position.set(-32,8,0);scene.add(cgl1);
+const agl=new THREE.PointLight(0x22ff44,2.8,35);agl.position.set(65,0,0);scene.add(agl);
+const hgl=new THREE.PointLight(0xff44aa,1.2,28);hgl.position.set(46,26,0);scene.add(hgl);
+const rbl1=new THREE.PointLight(0x88ffd8,5,42);rbl1.position.set(-18,12,0);scene.add(rbl1);
+const rbl2=new THREE.PointLight(0xffcc66,2.5,30);rbl2.position.set(-20,10,0);scene.add(rbl2);
+load(30);
+
+// MATERIALS
+function M(hex,r,m,eH,eI){return new THREE.MeshStandardMaterial({color:hex,roughness:r,metalness:m,emissive:eH||0,emissiveIntensity:eI||0})}
+const MAT_SHELL=new THREE.MeshStandardMaterial({map:shellCol,normalMap:shellNorm,normalScale:new THREE.Vector2(1.2,1.2),roughness:.78,metalness:.02,emissive:0x0a1508,emissiveIntensity:.02});
+const MAT_SD=new THREE.MeshStandardMaterial({map:shellCol,normalMap:shellNorm,normalScale:new THREE.Vector2(.8,.8),color:0x294d22,roughness:.84,metalness:.02});
+const MAT_SM=new THREE.MeshStandardMaterial({map:shellCol,normalMap:shellNorm,normalScale:new THREE.Vector2(1,1),color:0x4a7840,roughness:.74,metalness:.02,emissive:0x0d1309,emissiveIntensity:.02});
+const MAT_SL=new THREE.MeshStandardMaterial({map:shellCol,normalMap:shellNorm,normalScale:new THREE.Vector2(1,1),color:0x6b9b52,roughness:.66,metalness:.02,emissive:0x151b10,emissiveIntensity:.03});
+const MAT_SKIN=new THREE.MeshStandardMaterial({map:skinCol,normalMap:skinNorm,normalScale:new THREE.Vector2(1.5,1.5),roughness:.85,metalness:0,emissive:0x101a0a,emissiveIntensity:.02});
+const MAT_SKS=new THREE.MeshStandardMaterial({map:skinCol,normalMap:skinNorm,normalScale:new THREE.Vector2(1,1),color:0x5e7844,roughness:.9,metalness:0});
+const MAT_SKP=new THREE.MeshStandardMaterial({map:skinCol,normalMap:skinNorm,normalScale:new THREE.Vector2(.8,.8),color:0x4a5c38,roughness:.88,metalness:0});
+const MAT_ST=M(0x6d7a83,.28,.88,0x0d1720,.08),MAT_DS=M(0x2f3941,.32,.9,0x000011,.03),MAT_GOLD=M(0xc48b1a,.36,.76,0x2d1b00,.1),MAT_COP=M(0x9a5c2e,.42,.72,0x1a0800,.06);
+const MAT_CAN=M(0x445c72,.34,.76,0x001122,.05),MAT_CR=M(0x60738d,.24,.84,0x001133,.08),MAT_NOZ=M(0x223344,.18,.9,0x003388,.28);
+const MAT_RED=M(0xc21d35,.54,.18,0x220004,.12),MAT_PINK=M(0xff4c86,.42,.08,0x440011,.18),MAT_WOOD=M(0x6a3e12,.88,.04);
+const MAT_SCL=M(0xe8ffe8,.3,0,0x223322,.08),MAT_IRIS=M(0x004400,.2,0,0x002200,.22),MAT_PUP=M(0x000800,.15,0),MAT_GL=M(0xffffff,.05,0,0xffffff,1.25),MAT_TONG=M(0xff4466,.72,0,0xcc1133,.55);
+const MAT_GG=M(0x00ff66,.5,0,0x00ee44,2.2),MAT_GB=M(0x44aaff,.4,0,0x2266ff,2.4),MAT_GP=M(0xff66bb,.3,.1,0xff2277,1.8),MAT_GGO=M(0xffdd33,.3,.1,0xffaa00,2),MAT_GW=M(0xffaa44,.3,0,0xff8800,2);
+const MAT_GLASS=new THREE.MeshPhysicalMaterial({color:0xb8ffef,roughness:.06,metalness:0,transparent:true,opacity:.16,emissive:0x00261b,emissiveIntensity:.18,side:THREE.DoubleSide,depthWrite:false});
+const MAT_BG=new THREE.MeshStandardMaterial({color:0xd6fff6,roughness:.04,metalness:0,transparent:true,opacity:.03,emissive:0x22aa77,emissiveIntensity:.15,side:THREE.DoubleSide,depthWrite:false});
+function SS(m){m.castShadow=ENABLE_SHADOWS;m.receiveShadow=ENABLE_SHADOWS;return m}
+load(35);
+
+// SPACE BACKGROUND
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(1200,48,32),new THREE.MeshBasicMaterial({map:nebTex,side:THREE.BackSide,fog:false})));
+function mkStars(n,rMin,rMax,col,sz,op){const pos=new Float32Array(n*3);for(let i=0;i<n;i++){const th=Math.random()*Math.PI*2,ph=Math.acos(2*Math.random()-1),r=rMin+Math.random()*(rMax-rMin);pos[i*3]=r*Math.sin(ph)*Math.cos(th);pos[i*3+1]=r*Math.sin(ph)*Math.sin(th);pos[i*3+2]=r*Math.cos(ph)}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));return new THREE.Points(g,new THREE.PointsMaterial({color:col,size:sz,transparent:true,opacity:op,sizeAttenuation:true}))}
+scene.add(mkStars(LOW_POWER?2800:5500,550,950,0xf8fcff,LOW_POWER?.7:.85,.9));
+scene.add(mkStars(LOW_POWER?600:1200,400,700,0xa9d7ff,LOW_POWER?1.3:1.9,.5));
+scene.add(mkStars(LOW_POWER?80:180,450,750,0xffe8a0,LOW_POWER?2:3,.35));
+scene.add(mkStars(LOW_POWER?40:100,350,600,0xffb0b0,LOW_POWER?1.8:2.5,.25));
+
+// SCENE
+const ROOT=new THREE.Group();scene.add(ROOT);
+
+// SHELL
+const shellMesh=SS(new THREE.Mesh(new THREE.SphereGeometry(22,64,40),MAT_SHELL));shellMesh.scale.set(1.22,.76,1.08);ROOT.add(shellMesh);
+const scD=[[3,17.5,0,8.8,1.9,7.6,2],[1,16,11.2,7,1.45,6.2,1],[1,16,-11.2,7,1.45,6.2,1],[12.5,15,-7.5,5.6,1.15,5.2,0],[12.5,15,7.5,5.6,1.15,5.2,0],[-11.8,13.8,7,6,1.1,5.8,0],[-11.8,13.8,-7,6,1.1,5.8,0],[-4,13.2,16.2,5.2,1.05,5.2,2],[-4,13.2,-16.2,5.2,1.05,5.2,2],[17.2,11.5,0,5,.95,4.8,1],[-18,10.4,0,4.4,.88,4.2,1]];
+const sMs=[MAT_SD,MAT_SM,MAT_SL];
+scD.forEach(d=>{const m=SS(new THREE.Mesh(new THREE.SphereGeometry(1,12,10),sMs[d[6]]));m.scale.set(d[3],d[4],d[5]);m.position.set(d[0],d[1],d[2]);m.rotation.y=d[2]*.022;m.rotation.z=d[0]*.008;ROOT.add(m)});
+for(let i=0;i<14;i++){const t=i/14*Math.PI*2,p=SS(new THREE.Mesh(new THREE.SphereGeometry(1,10,8),i%2?MAT_SD:MAT_SM));p.scale.set(3.2,.65,4.1);p.position.set(Math.cos(t)*22,8.2+Math.sin(t*2)*.5,Math.sin(t)*19.2);p.rotation.y=-t;p.rotation.z=Math.sin(t)*.15;ROOT.add(p)}
+for(let i=0;i<5;i++){const r=new THREE.Mesh(new THREE.TorusGeometry(14+i*1.8,.2,8,48,Math.PI*1.4),MAT_SD);r.rotation.x=Math.PI/2;r.rotation.z=.3+i*.15;r.position.set(2-i*.5,14.5-i*1.5,0);r.scale.set(1.05,.82,1);ROOT.add(r)}
+const sP=new THREE.Mesh(new THREE.SphereGeometry(1,26,18),new THREE.MeshStandardMaterial({map:shellCol,normalMap:shellNorm,normalScale:new THREE.Vector2(1,1),color:0x4e6d3e,roughness:.76,metalness:.02}));sP.scale.set(16,3.2,12.2);sP.position.set(1.5,15.5,0);ROOT.add(sP);
+ROOT.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(1,24,16),M(0x365428,.86,.02)),{scale:new THREE.Vector3(7.2,1.5,6.5),position:new THREE.Vector3(-23.8,6.5,0)}));
+ROOT.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(1,32,20),M(0x8fa873,.88,0)),{scale:new THREE.Vector3(21,.65,16.5),position:new THREE.Vector3(1.5,-11.5,0)}));
+const rimB=new THREE.Mesh(new THREE.TorusGeometry(22,1.1,14,80),MAT_SD);rimB.scale.set(1.22,1,1.08);rimB.rotation.x=Math.PI/2;rimB.position.y=-2.6;ROOT.add(rimB);
+const sFlesh=new THREE.Mesh(new THREE.TorusGeometry(23,2.2,12,60),new THREE.MeshStandardMaterial({map:skinCol,normalMap:skinNorm,normalScale:new THREE.Vector2(.8,.8),color:0x6a8a50,roughness:.9,metalness:0,transparent:true,opacity:.55}));sFlesh.scale.set(1.18,.4,1.05);sFlesh.rotation.x=Math.PI/2;sFlesh.position.y=-4.5;ROOT.add(sFlesh);
+load(45);
+
+// REAR BAY
+const rWG=new THREE.Group();rWG.position.set(-24,10.8,0);ROOT.add(rWG);
+rWG.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(8.2,8.8,10,32,1,true),new THREE.MeshStandardMaterial({color:0x0c1a20,roughness:.52,metalness:.12,side:THREE.DoubleSide})),{rotation:new THREE.Euler(0,0,Math.PI/2),position:new THREE.Vector3(4,0,0),scale:new THREE.Vector3(1.4,.7,1)}));
+const rFL=new THREE.Mesh(new THREE.TorusGeometry(7.5,1.2,16,48),MAT_SKS);rFL.rotation.y=Math.PI/2;rFL.scale.set(1.62,.68,1);rWG.add(rFL);
+const rWR=new THREE.Mesh(new THREE.TorusGeometry(7.2,.48,14,48),MAT_GOLD);rWR.rotation.y=Math.PI/2;rWR.scale.set(1.55,.62,1);rWG.add(rWR);
+const rWGl=new THREE.Mesh(new THREE.CircleGeometry(6.5,32),MAT_BG);rWGl.rotation.y=Math.PI/2;rWGl.scale.set(1.52,.58,1);rWGl.position.x=.3;rWG.add(rWGl);
+[-.35,.35].forEach(ry=>{const s=new THREE.Mesh(new THREE.BoxGeometry(.12,9.5,.2),MAT_COP);s.rotation.y=Math.PI/2;s.rotation.z=ry;s.position.x=.2;rWG.add(s)});
+const hS=new THREE.Mesh(new THREE.BoxGeometry(.12,18,.2),MAT_COP);hS.rotation.y=Math.PI/2;hS.rotation.x=Math.PI/2;hS.position.x=.2;rWG.add(hS);
+
+const eB=new THREE.Group();eB.position.set(2.5,0,0);rWG.add(eB);
+eB.add(Object.assign(new THREE.Mesh(new THREE.PlaneGeometry(16,9),new THREE.MeshStandardMaterial({color:0x162838,roughness:.72,metalness:.14,emissive:0x081418,emissiveIntensity:.08})),{position:new THREE.Vector3(14,0,0),rotation:new THREE.Euler(0,Math.PI/2,0)}));
+eB.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(13,.32,12),new THREE.MeshStandardMaterial({color:0x5a3d1e,roughness:.82,metalness:.06})),{position:new THREE.Vector3(7.5,-3.8,0)}));
+for(let i=-5;i<=5;i++){const pl=new THREE.Mesh(new THREE.BoxGeometry(12.5,.04,.06),M(0x3a2510,.9,0));pl.position.set(7.5,-3.6,i*1.05);eB.add(pl)}
+eB.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(11.5,.22,10.5),M(0x1e2a32,.78,.18)),{position:new THREE.Vector3(7.5,3.8,0)}));
+for(let i=0;i<4;i++){const rib=new THREE.Mesh(new THREE.TorusGeometry(5.2,.18,10,32,Math.PI),new THREE.MeshStandardMaterial({color:0x5c6b56,roughness:.65,metalness:.22,emissive:0x0a1208,emissiveIntensity:.04}));rib.rotation.z=Math.PI/2;rib.position.set(3.2+i*2.8,.5,0);eB.add(rib)}
+[-5,5].forEach(z=>{const w=new THREE.Mesh(new THREE.PlaneGeometry(12,7.5),new THREE.MeshStandardMaterial({color:0x1a2822,roughness:.82,metalness:.08,side:THREE.DoubleSide}));w.rotation.y=z>0?-Math.PI/2:Math.PI/2;w.position.set(7.5,0,z);eB.add(w)});
+
+function bHW(z){const g=new THREE.Group();g.position.set(1.8,-.5,z);g.scale.set(1.65,1.65,1.65);const ring=new THREE.Mesh(new THREE.TorusGeometry(2.4,.22,12,28),MAT_GOLD);ring.rotation.y=Math.PI/2;g.add(ring);const ir=new THREE.Mesh(new THREE.TorusGeometry(2,.1,8,24),MAT_ST);ir.rotation.y=Math.PI/2;g.add(ir);for(let i=0;i<8;i++){const s=new THREE.Mesh(new THREE.BoxGeometry(.1,4.5,.1),MAT_ST);s.rotation.x=i*Math.PI/4;g.add(s)}const tr=new THREE.Mesh(new THREE.CylinderGeometry(2.3,2.3,1.4,20,1,true),new THREE.MeshStandardMaterial({color:0x4a5550,roughness:.78,metalness:.2,side:THREE.DoubleSide}));tr.rotation.x=Math.PI/2;g.add(tr);const h=new THREE.Group();h.position.set(0,1.5,0);h.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.42,12,10),M(0xd4a060,.84,0)),{scale:new THREE.Vector3(1.3,.9,.88)}));const hd=new THREE.Mesh(new THREE.SphereGeometry(.26,12,10),M(0xeacfa0,.78,0));hd.position.set(.38,.08,0);h.add(hd);[-.12,.12].forEach(ez=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.08,8,6),M(0xf0c8a0,.8,0));e.position.set(.48,.22,ez);h.add(e)});[-.06,.06].forEach(ez=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.04,6,6),M(0x111111,.2,0));e.position.set(.52,.12,ez);h.add(e)});g.add(h);eB.add(g);return{g,hamster:h}}
+const wA=bHW(-2.5),wB=bHW(2.5);
+for(let i=0;i<6;i++){const p=new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,7,10),i%2?MAT_COP:MAT_DS);p.rotation.z=Math.PI/2;p.position.set(8,-2.8+i*1.25,(i%2===0?-1:1)*3.8);eB.add(p)}
+const cG=new THREE.Mesh(new THREE.SphereGeometry(1.1,18,14),new THREE.MeshStandardMaterial({color:0x44ffaa,emissive:0x22ff88,emissiveIntensity:3,transparent:true,opacity:.7}));cG.position.set(10.5,-.5,0);eB.add(cG);
+const cH=new THREE.Mesh(new THREE.SphereGeometry(2,14,10),new THREE.MeshStandardMaterial({color:0x22ff88,emissive:0x11cc55,emissiveIntensity:1,transparent:true,opacity:.15,side:THREE.DoubleSide,depthWrite:false}));cH.position.copy(cG.position);eB.add(cH);
+for(let i=0;i<4;i++){const m=new THREE.Mesh(new THREE.PlaneGeometry(1.4,.6),new THREE.MeshBasicMaterial({color:[0x67ffd3,0xffb45b,0x67ffd3,0xff6688][i],transparent:true,opacity:.72}));m.position.set(9,2.2-i*1.2,-4+i*2.6);m.rotation.y=Math.PI/2;eB.add(m)}
+[-2.8,2.8].forEach(lz=>{eB.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1.5,6),MAT_DS),{position:new THREE.Vector3(4.5,2.8,lz)}));eB.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.4,10,8),MAT_GW),{position:new THREE.Vector3(4.5,1.8,lz)}))});
+eB.add(Object.assign(new THREE.PointLight(0x88ffd0,4,28),{position:new THREE.Vector3(3.5,.5,0)}));
+eB.add(Object.assign(new THREE.PointLight(0xffcc88,2.5,22),{position:new THREE.Vector3(9,1,0)}));
+load(52);
+
+// FLIPPERS
+function addFlip(x,y,z,side,front){const grp=new THREE.Group();grp.position.set(x,y,z);grp.rotation.z=side*.06;ROOT.add(grp);const sh=SS(new THREE.Mesh(new THREE.SphereGeometry(1,20,16),MAT_SKS));sh.scale.set(front?2.6:1.9,front?1.4:1.15,front?1.9:1.5);grp.add(sh);const up=SS(new THREE.Mesh(new THREE.SphereGeometry(1,24,16),MAT_SKIN));up.scale.set(front?5.5:3.2,front?1:.8,front?2.8:1.8);up.position.set(front?2.5:-.6,front?-1.2:-.9,side*(front?4.2:2.4));up.rotation.y=side*(front?.72:.55);grp.add(up);const fin=SS(new THREE.Mesh(new THREE.SphereGeometry(1,32,20),MAT_SKIN));fin.scale.set(front?15:8.5,front?.55:.45,front?5:3);fin.position.set(front?7.5:-1.5,front?-2.8:-2.2,side*(front?10:5.5));fin.rotation.y=side*(front?.88:.65);fin.rotation.z=side*(front?-.04:-.02);fin.rotation.x=front?.06:.03;grp.add(fin);if(front)for(let r=0;r<4;r++){const ri=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),MAT_SKS);ri.scale.set(8-r*1.5,.18,.6);ri.position.set(10+r*1.2,-2.7,side*(8+r*1.8));ri.rotation.y=side*(.88+r*.04);grp.add(ri)}const tip=SS(new THREE.Mesh(new THREE.SphereGeometry(1,18,12),MAT_SKP));tip.scale.set(front?5:2.8,.18,front?2:1.1);tip.position.set(front?14:-5.2,front?-2.85:-2.35,side*(front?16:7.5));tip.rotation.y=side*(front?.88:.65);grp.add(tip);for(let s=0;s<(front?5:2);s++){const sp=new THREE.Mesh(new THREE.SphereGeometry(1,8,6),MAT_SKP);sp.scale.set(front?1.4:.8,.12,front?.9:.5);sp.position.set(front?3+s*3:-1-s*1.5,front?-2.4:-1.9,side*(front?5+s*2.5:3+s*1.8));sp.rotation.y=side*(front?.88:.65);grp.add(sp)}return{grp,fin,tip}}
+const legFR=addFlip(9.8,-7.8,13.2,1,true),legFL=addFlip(9.8,-7.8,-13.2,-1,true),legBR=addFlip(-16.6,-9.2,9.2,1,false),legBL=addFlip(-16.6,-9.2,-9.2,-1,false);
+const tailGrp=new THREE.Group();tailGrp.position.set(-26,-5,0);ROOT.add(tailGrp);tailGrp.add(Object.assign(new THREE.Mesh(new THREE.ConeGeometry(1.8,5.5,10),MAT_SKS),{rotation:new THREE.Euler(0,0,Math.PI/2+.3)}));
+
+// DOME
+ROOT.add(SS(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(11.4,12.6,3,40),MAT_DS),{position:new THREE.Vector3(0,15,0)})));
+ROOT.add(Object.assign(new THREE.Mesh(new THREE.TorusGeometry(11.8,.55,12,60),MAT_GOLD),{rotation:new THREE.Euler(Math.PI/2,0,0),position:new THREE.Vector3(0,16.55,0)}));
+for(let i=0;i<16;i++){const t=i/16*Math.PI*2;ROOT.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.35,8,6),MAT_COP),{position:new THREE.Vector3(Math.sin(t)*12,16.55,Math.cos(t)*12)}))}
+ROOT.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(11.8,52,30,0,Math.PI*2,0,Math.PI/2),MAT_GLASS),{position:new THREE.Vector3(0,16.4,0)}));
+for(let i=0;i<6;i++){const s=new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,12.5,8),MAT_ST);s.position.set(0,16.35,0);s.rotation.z=i/6*Math.PI;s.rotation.x=.55;ROOT.add(s)}
+ROOT.add(Object.assign(new THREE.Mesh(new THREE.TorusGeometry(11.5,.55,14,60),MAT_ST),{rotation:new THREE.Euler(Math.PI/2,0,0),position:new THREE.Vector3(0,16.35,0)}));
+const igMesh=new THREE.Mesh(new THREE.SphereGeometry(10.4,24,16,0,Math.PI*2,0,Math.PI/2),new THREE.MeshStandardMaterial({color:0x00ffaa,emissive:0x00ee88,emissiveIntensity:.6,transparent:true,opacity:.1,side:THREE.BackSide}));igMesh.position.set(0,16.7,0);ROOT.add(igMesh);
+ROOT.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(8.6,9.4,1.1,24),M(0x31404a,.72,.32,0x051018,.02)),{position:new THREE.Vector3(0,16.5,0)}));
+ROOT.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(5.4,1.6,2.2),MAT_DS),{position:new THREE.Vector3(3,17,0),rotation:new THREE.Euler(0,0,-.2)}));
+ROOT.add(Object.assign(new THREE.Mesh(new THREE.PlaneGeometry(2.4,.7),new THREE.MeshBasicMaterial({color:0x67ffd3,transparent:true,opacity:.75})),{position:new THREE.Vector3(4.7,17.5,0),rotation:new THREE.Euler(0,Math.PI/2,-.2)}));
+const helmW=new THREE.Mesh(new THREE.TorusGeometry(1.5,.12,8,18),MAT_WOOD);helmW.position.set(5.5,18,0);helmW.rotation.y=Math.PI/2;ROOT.add(helmW);
+for(let i=0;i<6;i++){const hs=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,3,6),MAT_WOOD);hs.position.copy(helmW.position);hs.rotation.y=Math.PI/2;hs.rotation.z=i*Math.PI/3;ROOT.add(hs)}
+load(58);
+
+// CREW
+const crewCabin=new THREE.Group();crewCabin.position.set(0,16.8,0);ROOT.add(crewCabin);
+function addC(x,z,tint,kind){const a=new THREE.Group();a.scale.set(1.18,1.18,1.18);a.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.46,.68,3.2,10),M(tint,.88,.02)),{position:new THREE.Vector3(0,1.65,0)}));a.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.78,12,10),M(0xd7d3c8,.82,0)),{position:new THREE.Vector3(0,3.85,0)}));const sh=new THREE.Mesh(new THREE.SphereGeometry(.58,10,8),M(tint,.84,.01));sh.scale.set(2.2,.55,1.2);sh.position.y=2.55;a.add(sh);if(kind==='wizard'){a.add(Object.assign(new THREE.Mesh(new THREE.ConeGeometry(.88,1.9,10),M(0x5b305a,.82,.02)),{position:new THREE.Vector3(0,5,0)}));const sw=new THREE.Mesh(new THREE.BoxGeometry(.12,3.4,.24),MAT_GB);sw.position.set(-.9,2.2,.45);sw.rotation.z=.28;a.add(sw)}if(kind==='cat'){[-.28,.28].forEach(s=>{a.add(Object.assign(new THREE.Mesh(new THREE.ConeGeometry(.24,.54,6),M(0xc59b67,.8,0)),{position:new THREE.Vector3(s*1.15,4.55,s*.06)}))});const rp=new THREE.Mesh(new THREE.BoxGeometry(.08,2.8,.08),MAT_ST);rp.position.set(.85,2,-.4);rp.rotation.z=-.45;a.add(rp);a.add(Object.assign(new THREE.Mesh(new THREE.ConeGeometry(.8,2.2,8),M(0x8b1a1a,.72,.02)),{position:new THREE.Vector3(-.3,1.2,0),rotation:new THREE.Euler(0,0,.15)}))}if(kind==='monk'){const f=new THREE.Mesh(new THREE.SphereGeometry(.3,8,8),M(0xd7d3c8,.82,0));f.position.set(.92,2.6,.42);a.add(f);const f2=f.clone();f2.position.set(.92,2.4,-.42);a.add(f2);a.add(Object.assign(new THREE.Mesh(new THREE.TorusGeometry(.82,.08,6,16),M(0xffcc33,.5,.1)),{position:new THREE.Vector3(0,3.85,0),rotation:new THREE.Euler(Math.PI/2,0,0)}))}if(kind==='fighter'){const p=new THREE.Mesh(new THREE.SphereGeometry(.38,8,8),MAT_GOLD);p.position.set(.72,2.8,.55);a.add(p);const p2=p.clone();p2.position.set(.72,2.8,-.55);a.add(p2);a.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.18,.2,.5,8),MAT_GOLD),{position:new THREE.Vector3(1.1,2.2,.5)}))}a.position.set(x,0,z);crewCabin.add(a);return a}
+const crewActors=[addC(2.8,-2.1,0xc9a15c,'fighter'),addC(1.7,1.9,0x4f79c8,'monk'),addC(-1.4,-1.8,0x7e4e92,'wizard'),addC(-2.5,1.9,0xc68358,'cat')];
+
+// FRONT HATCH
+(function(){const g=new THREE.Group();g.position.set(18.5,11.2,0);g.rotation.z=-.35;ROOT.add(g);g.add(new THREE.Mesh(new THREE.CylinderGeometry(2.6,2.2,4.5,24,1,true),new THREE.MeshStandardMaterial({color:0x2a3d22,roughness:.92,metalness:0,side:THREE.DoubleSide})));const fl=new THREE.Mesh(new THREE.TorusGeometry(2.75,.65,12,28),MAT_SKS);fl.rotation.x=Math.PI/2;fl.position.y=.2;g.add(fl);const cl=new THREE.Mesh(new THREE.TorusGeometry(2.9,.35,10,24),MAT_SD);cl.rotation.x=Math.PI/2;cl.position.y=.5;g.add(cl);const gr=new THREE.Mesh(new THREE.TorusGeometry(2.5,.18,10,32),MAT_GOLD);gr.rotation.x=Math.PI/2;gr.position.y=.15;g.add(gr);g.add(Object.assign(new THREE.Mesh(new THREE.CircleGeometry(2.1,24),new THREE.MeshBasicMaterial({color:0x040e08})),{rotation:new THREE.Euler(Math.PI/2,0,0),position:new THREE.Vector3(0,-2.2,0)}));g.add(Object.assign(new THREE.Mesh(new THREE.CircleGeometry(1.8,20),new THREE.MeshStandardMaterial({color:0xffcc44,emissive:0xffaa22,emissiveIntensity:2.2,transparent:true,opacity:.35})),{rotation:new THREE.Euler(Math.PI/2,0,0),position:new THREE.Vector3(0,-1.8,0)}));for(let i=0;i<3;i++){const r=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,2.8,6),MAT_COP);r.rotation.y=Math.PI/2;r.position.set(-.4,-.3-i*.7,0);g.add(r)}g.add(Object.assign(new THREE.Mesh(new THREE.CircleGeometry(2.3,24),new THREE.MeshStandardMaterial({map:shellCol,normalMap:shellNorm,normalScale:new THREE.Vector2(.8,.8),color:0x3a5430,roughness:.85,metalness:.05})),{rotation:new THREE.Euler(-.4,0,0),position:new THREE.Vector3(.8,1.8,0)}));g.add(Object.assign(new THREE.Mesh(new THREE.TorusGeometry(.5,.08,8,16),MAT_GOLD),{rotation:new THREE.Euler(-.4,0,0),position:new THREE.Vector3(.8,2,0)}));g.add(Object.assign(new THREE.PointLight(0xffcc44,1.8,12),{position:new THREE.Vector3(0,-.5,0)}))})();
+load(62);
+
+// PERISCOPE
+ROOT.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.9,.9,18,18),MAT_ST),{position:new THREE.Vector3(-14,26.5,0)}));
+for(let i=0;i<4;i++)ROOT.add(Object.assign(new THREE.Mesh(new THREE.TorusGeometry(1.1,.15,8,18),MAT_DS),{position:new THREE.Vector3(-14,19+i*4.5,0),rotation:new THREE.Euler(Math.PI/2,0,0)}));
+ROOT.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(5,3.5,5.8),MAT_DS),{position:new THREE.Vector3(-14,36.2,0)}));
+ROOT.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,.6,20),MAT_GB),{rotation:new THREE.Euler(0,0,Math.PI/2),position:new THREE.Vector3(-11.2,36.2,0)}));
+
+// NECK + HEAD
+const nPts=[];for(let i=0;i<=20;i++){const t=i/20;nPts.push(new THREE.Vector3(15+t*25,-1.5+Math.sin(t*Math.PI*.85)*8.5,0))}
+const nCurve=new THREE.CatmullRomCurve3(nPts);ROOT.add(SS(new THREE.Mesh(new THREE.TubeGeometry(nCurve,32,4.4,16,false),MAT_SKIN)));
+for(let i=0;i<7;i++){const t=.12+i*.12,p=nCurve.getPoint(t),tn=nCurve.getTangent(t).normalize();const r=new THREE.Mesh(new THREE.TorusGeometry(4.2,.22,8,20),MAT_SKS);r.position.copy(p);r.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),tn);r.rotation.y+=Math.PI/2;ROOT.add(r)}
+
+const headGrp=new THREE.Group();headGrp.position.set(44,4,0);ROOT.add(headGrp);
+headGrp.add(SS(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(9.5,52,36),MAT_SKIN),{scale:new THREE.Vector3(1.22,.98,1.1)})));
+headGrp.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(1,16,10),M(0x2a6838,.84,0)),{scale:new THREE.Vector3(9.5,2,2.8),position:new THREE.Vector3(4,6.2,0),rotation:new THREE.Euler(0,0,-.12)}));
+
+function bEye(sZ){const g=new THREE.Group();g.add(new THREE.Mesh(new THREE.SphereGeometry(2.8,30,22),MAT_SCL));const ir=new THREE.Mesh(new THREE.SphereGeometry(2.15,24,18),MAT_IRIS);ir.position.set(.8,0,0);g.add(ir);const pu=new THREE.Mesh(new THREE.SphereGeometry(1.35,18,14),MAT_PUP);pu.position.set(1.2,0,0);g.add(pu);const gl=new THREE.Mesh(new THREE.SphereGeometry(.55,10,8),MAT_GL);gl.position.set(1.65,1.05,.55);g.add(gl);g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.25,8,6),MAT_GL),{position:new THREE.Vector3(1.4,-.6,-.3)}));const bE=new THREE.Mesh(new THREE.TorusGeometry(2.6,.55,8,22,Math.PI*.7),M(0x1d6e34,.7,.06));bE.position.set(.3,2.7,0);bE.rotation.z=sZ>0?.28:-.28;g.add(bE);const lid=new THREE.Mesh(new THREE.TorusGeometry(2.4,.35,8,18,Math.PI*.5),M(0x1d5e34,.75,.04));lid.position.set(.3,-2.3,0);lid.rotation.z=sZ>0?-.2:.2;lid.rotation.x=Math.PI;g.add(lid);g.position.set(8.2,2.8,sZ*4.6);return{grp:g,iris:ir,pupil:pu,gleam:gl}}
+const eyeR=bEye(1),eyeL=bEye(-1);headGrp.add(eyeR.grp);headGrp.add(eyeL.grp);
+headGrp.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(1,18,12),M(0x24573a,.84,0)),{scale:new THREE.Vector3(6.8,.9,5),position:new THREE.Vector3(7,-6.3,0)}));
+const gC=new THREE.CatmullRomCurve3([new THREE.Vector3(5.5,-5.2,4.5),new THREE.Vector3(9,-5.8,3),new THREE.Vector3(10.5,-5.5,0),new THREE.Vector3(9,-5.8,-3),new THREE.Vector3(5.5,-5.2,-4.5)]);
+headGrp.add(new THREE.Mesh(new THREE.TubeGeometry(gC,20,.22,8,false),M(0x0a1a0e,.9,0)));
+headGrp.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(1,14,10),MAT_TONG),{scale:new THREE.Vector3(3.5,.55,2.5),position:new THREE.Vector3(9.2,-6,0)}));
+const mouthMarker=new THREE.Object3D();mouthMarker.position.set(11.8,-4.5,0);headGrp.add(mouthMarker);
+[-1.5,1.5].forEach(nz=>headGrp.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.65,10,8),M(0x0a1a0e,.9,0)),{position:new THREE.Vector3(10.5,-1.8,nz)})));
+[[6.2,-1.1,5.4,1.3,.55,1.1],[5.8,-1.7,-5.6,1,.45,.9],[3.1,.5,6.8,.9,.38,.8],[2.8,-.2,-7,.9,.38,.8],[1.5,3,5.5,.7,.3,.6],[.5,2.5,-6,.6,.25,.5],[-2,1,4.8,.8,.3,.7],[-3,-1.5,-4.2,.7,.28,.6]].forEach(([x,y,z,sx,sy,sz])=>headGrp.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(1,10,8),MAT_SKP),{scale:new THREE.Vector3(sx,sy,sz),position:new THREE.Vector3(x,y,z)})));
+
+// HAT
+const hatGrp=new THREE.Group();hatGrp.position.set(4.4,11.8,0);hatGrp.rotation.z=-.08;headGrp.add(hatGrp);
+hatGrp.add(new THREE.Mesh(new THREE.CylinderGeometry(4.5,4.5,.65,36),MAT_RED));
+hatGrp.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(2.9,3.1,4.2,36),MAT_RED),{position:new THREE.Vector3(0,2.4,0)}));
+[.8,1.6,2.4,3.2].forEach(py=>hatGrp.add(Object.assign(new THREE.Mesh(new THREE.TorusGeometry(3,.12,6,24),M(0xffffff,.5,0)),{rotation:new THREE.Euler(Math.PI/2,0,0),position:new THREE.Vector3(0,py,0)})));
+hatGrp.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(2.9,2.9,.5,36),MAT_RED),{position:new THREE.Vector3(0,4.7,0)}));
+hatGrp.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.75,14,10),MAT_GOLD),{position:new THREE.Vector3(0,5.2,0)}));
+const bladeGrp=new THREE.Group();bladeGrp.position.y=5.2;hatGrp.add(bladeGrp);
+[MAT_PINK,MAT_GB,MAT_GGO,MAT_GG].forEach((mat,b)=>{const pv=new THREE.Group();pv.rotation.y=b*Math.PI/2;pv.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(10.5,.32,2.4),mat),{position:new THREE.Vector3(5.25,0,0)}));bladeGrp.add(pv)});
+
+// MEGAPHONE
+const megGrp=new THREE.Group();megGrp.position.set(7.2,16.8,9.4);megGrp.rotation.y=-.06;megGrp.scale.set(.54,.54,.54);ROOT.add(megGrp);
+megGrp.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(1.3,3.2,10,24),MAT_GOLD),{rotation:new THREE.Euler(0,0,Math.PI/2),position:new THREE.Vector3(3,0,0)}));
+megGrp.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(3.2,6,5,24),MAT_GOLD),{rotation:new THREE.Euler(0,0,Math.PI/2),position:new THREE.Vector3(10.5,0,0)}));
+megGrp.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(3.5,1.2,5.8),MAT_DS),{position:new THREE.Vector3(.6,-2,0)}));
+megGrp.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(2.2,2.6,1.5,18),MAT_DS),{position:new THREE.Vector3(-.8,-2.55,0)}));
+const megRim=new THREE.Mesh(new THREE.TorusGeometry(6,.38,12,48),MAT_GGO);megRim.rotation.y=Math.PI/2;megRim.position.x=13;megGrp.add(megRim);
+
+// SLINGSHOT
+const slGrp=new THREE.Group();slGrp.position.set(11.8,23.2,0);slGrp.rotation.z=-.08;ROOT.add(slGrp);
+slGrp.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(3.1,3.8,1.8,18),MAT_DS),{position:new THREE.Vector3(0,-4.2,0)}));
+[-1,1].forEach(s=>{const b=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,9.4,10),MAT_ST);b.position.set(-.8,-.4,s*2.8);b.rotation.z=.48;b.rotation.x=s*.18;slGrp.add(b)});
+[[-4.2,.34],[4.2,-.34]].forEach(([pz,rx])=>slGrp.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.56,.56,12.8,10),MAT_WOOD),{position:new THREE.Vector3(0,6.3,pz),rotation:new THREE.Euler(rx,0,0)})));
+slGrp.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.72,.88,8.5,12),MAT_WOOD),{position:new THREE.Vector3(0,-1,0)}));
+slGrp.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0,12.3,-4.2),new THREE.Vector3(0,8.9,0),new THREE.Vector3(0,12.3,4.2)]),18,.22,8,false),M(0xcc5500,.65,.08,0x882200,.4)));
+const ammoBall=new THREE.Group();ammoBall.position.set(0,8.9,0);
+[[0,0,0,1.2],[.7,.2,-.1,.7],[-.6,-.15,.4,.55],[.15,-.45,.65,.42]].forEach(([x,y,z,s])=>ammoBall.add(Object.assign(new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),M(0x727a73,.96,.02)),{position:new THREE.Vector3(x,y,z),rotation:new THREE.Euler(x*.6,y*.9,z*.8)})));
+ammoBall.add(new THREE.Mesh(new THREE.SphereGeometry(.7,12,10),new THREE.MeshStandardMaterial({color:0x7fcaa2,emissive:0x4dff9f,emissiveIntensity:.3,transparent:true,opacity:.22})));
 slGrp.add(ammoBall);
+load(68);
 
-// =============================================
-//  REAR BOOSTERS
-// =============================================
-function buildCannon(posZ) {
-  const cGrp = new THREE.Group();
+// CANNONS
+function bCan(posZ){const cGrp=new THREE.Group();cGrp.add(SS(new THREE.Mesh(new THREE.SphereGeometry(4.6,24,18),MAT_CAN)));const mR=new THREE.Mesh(new THREE.TorusGeometry(4.8,.5,12,40),MAT_CR);mR.rotation.y=Math.PI/2;cGrp.add(mR);const col=new THREE.Mesh(new THREE.CylinderGeometry(4.2,4.8,4.2,24),MAT_CR);col.rotation.z=Math.PI/2;col.position.x=-2.1;cGrp.add(col);const bG=new THREE.Group();bG.add(SS(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(3.4,2.9,22,32),MAT_CAN),{rotation:new THREE.Euler(0,0,Math.PI/2),position:new THREE.Vector3(-11,0,0)})));bG.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(14,2.3,1.1),MAT_CR),{position:new THREE.Vector3(-9.5,-2.1,0)}));for(let r=0;r<3;r++){const d=new THREE.Mesh(new THREE.TorusGeometry(3.2,.52,12,40),MAT_CR);d.rotation.y=Math.PI/2;d.position.x=-4.2-r*5.2;bG.add(d)}bG.add(Object.assign(new THREE.Mesh(new THREE.TorusGeometry(3.2,.7,14,40),MAT_NOZ),{rotation:new THREE.Euler(0,Math.PI/2,0),position:new THREE.Vector3(-21.2,0,0)}));bG.add(Object.assign(new THREE.Mesh(new THREE.CircleGeometry(2.8,28),M(0xffc861,.3,0,0xff7a00,3.2)),{rotation:new THREE.Euler(0,Math.PI/2,0),position:new THREE.Vector3(-21.6,0,0)}));bG.add(Object.assign(new THREE.Mesh(new THREE.CircleGeometry(1.4,20),M(0x78d7ff,.2,0,0x2b9dff,2.4)),{rotation:new THREE.Euler(0,Math.PI/2,0),position:new THREE.Vector3(-21.75,0,0)}));bG.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(2.4,2.4,22,20,1,true),new THREE.MeshStandardMaterial({color:0xffb65b,emissive:0xff7b12,emissiveIntensity:1.5,transparent:true,opacity:.45,side:THREE.BackSide})),{rotation:new THREE.Euler(0,0,Math.PI/2),position:new THREE.Vector3(-11,0,0)}));bG.add(Object.assign(new THREE.PointLight(0xff8c33,4.5,34),{position:new THREE.Vector3(-21.8,0,0)}));const mm=new THREE.Object3D();mm.position.x=-22;bG.add(mm);cGrp.add(bG);cGrp.position.set(-17.4,8.7,posZ);return{group:cGrp,muzzleMarker:mm}}
+const can1=bCan(16),can2=bCan(-16);ROOT.add(can1.group);ROOT.add(can2.group);ROOT.updateMatrixWorld(true);
 
-  const mount = setShadow(new THREE.Mesh(new THREE.SphereGeometry(4.6, 24, 18), MAT_CANNON));
-  cGrp.add(mount);
+// DONUT PLANET
+const pG=new THREE.Group();pG.position.set(310,110,-460);scene.add(pG);
+pG.add(new THREE.Mesh(new THREE.SphereGeometry(42,44,32),M(0xff9900,.85,0,0xff6600,3.2)));
+pG.add(new THREE.Mesh(new THREE.SphereGeometry(62,28,20),new THREE.MeshStandardMaterial({color:0xff4400,emissive:0xff2200,emissiveIntensity:.6,transparent:true,opacity:.14,side:THREE.BackSide})));
+pG.add(new THREE.Mesh(new THREE.SphereGeometry(85,20,16),new THREE.MeshStandardMaterial({color:0xff6600,emissive:0xff3300,emissiveIntensity:.3,transparent:true,opacity:.07,side:THREE.BackSide,depthWrite:false})));
+const donutM=new THREE.Mesh(new THREE.TorusGeometry(106,24,26,100),M(0xcc5500,.58,.12,0x661100,.35));donutM.rotation.x=Math.PI/2;pG.add(donutM);
+pG.add(Object.assign(new THREE.Mesh(new THREE.TorusGeometry(106,24.5,26,100),new THREE.MeshStandardMaterial({color:0xffc8a0,roughness:.65,metalness:0,transparent:true,opacity:.25,side:THREE.FrontSide,depthWrite:false,emissive:0x442200,emissiveIntensity:.15})),{rotation:new THREE.Euler(Math.PI/2,0,0),position:new THREE.Vector3(0,.5,0)}));
+for(let i=0;i<40;i++){const t=Math.random()*Math.PI*2,p=Math.random()*Math.PI*2,sc=[0xff4466,0x44ff66,0x4488ff,0xffcc22,0xff66cc][i%5];const sp=new THREE.Mesh(new THREE.BoxGeometry(2.5,.8,.8),M(sc,.5,0,sc,.6));sp.position.set((106+25*Math.cos(p))*Math.cos(t),25*Math.sin(p)+.5,(106+25*Math.cos(p))*Math.sin(t));sp.rotation.set(Math.random()*2,Math.random()*2,Math.random()*2);sp.visible=Math.sin(p)>.2;pG.add(sp)}
+pG.add(Object.assign(new THREE.Mesh(new THREE.TorusGeometry(106,28,18,100),new THREE.MeshBasicMaterial({color:0xffb07a,transparent:true,opacity:.1,side:THREE.DoubleSide,depthWrite:false})),{rotation:new THREE.Euler(Math.PI/2,0,0)}));
+pG.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(9,20,16),M(0x6b7ca1,.8,.02)),{position:new THREE.Vector3(-132,26,-24)}));
+pG.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(14,22,16),M(0x846a9a,.82,.02)),{position:new THREE.Vector3(145,-34,58)}));
+const rP=new THREE.Group();rP.position.set(-340,-90,-520);scene.add(rP);
+rP.add(new THREE.Mesh(new THREE.SphereGeometry(28,28,22),M(0x4d75a4,.72,.04)));
+rP.add(Object.assign(new THREE.Mesh(new THREE.TorusGeometry(48,5.4,12,72),new THREE.MeshBasicMaterial({color:0xbfd9ff,transparent:true,opacity:.18,side:THREE.DoubleSide,depthWrite:false})),{rotation:new THREE.Euler(1.1,.35,0)}));
+pG.add(new THREE.PointLight(0xff9944,1.4,1800,1.8));
+load(78);
 
-  const mRing = new THREE.Mesh(new THREE.TorusGeometry(4.8, 0.5, 12, 40), MAT_CANNON_RING);
-  mRing.rotation.y = Math.PI / 2;
-  cGrp.add(mRing);
+// PARTICLES
+const NC=LOW_POWER?260:650,cPos=new Float32Array(NC*3),cVel=[];
+const mS=new THREE.Vector3(),aS=new THREE.Vector3(),muzzles=[can1.muzzleMarker,can2.muzzleMarker];
+function rCP(i){const m=muzzles[i%2].getWorldPosition(mS);cPos[i*3]=m.x+(Math.random()-.5)*2.5;cPos[i*3+1]=m.y+(Math.random()-.5)*2.5;cPos[i*3+2]=m.z+(Math.random()-.5)*2.5;cVel[i]={vx:-(Math.random()*1.15+.95),vy:(Math.random()-.5)*.16,vz:(Math.random()-.5)*.12,life:Math.random()*1.3+.18}}
+for(let i=0;i<NC;i++)rCP(i);
+const canGeo=new THREE.BufferGeometry();canGeo.setAttribute('position',new THREE.BufferAttribute(cPos,3));
+scene.add(new THREE.Points(canGeo,new THREE.PointsMaterial({color:0xffb766,size:LOW_POWER?1.2:1.6,transparent:true,opacity:.92,sizeAttenuation:true})));
 
-  const collar = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.8, 4.2, 24), MAT_CANNON_RING);
-  collar.rotation.z = Math.PI / 2;
-  collar.position.x = -2.1;
-  cGrp.add(collar);
+const NA=LOW_POWER?160:350,aPos=new Float32Array(NA*3),aVel=[];
+function rAP(i){const m=mouthMarker.getWorldPosition(aS);aPos[i*3]=m.x+Math.random()*4;aPos[i*3+1]=m.y+(Math.random()-.5)*3.2;aPos[i*3+2]=m.z+(Math.random()-.5)*3.2;aVel[i]={vx:Math.random()*.65+.25,vy:(Math.random()-.5)*.07,vz:(Math.random()-.5)*.07,life:Math.random()*1.8+.4}}
+for(let i=0;i<NA;i++)rAP(i);
+const acidGeo=new THREE.BufferGeometry();acidGeo.setAttribute('position',new THREE.BufferAttribute(aPos,3));
+scene.add(new THREE.Points(acidGeo,new THREE.PointsMaterial({color:0x33ff44,size:LOW_POWER?1.1:1.5,transparent:true,opacity:.94,sizeAttenuation:true})));
 
-  const barGrp = new THREE.Group();
+const tLen=LOW_POWER?40:64,tPos=new Float32Array(tLen*3);
+for(let i=0;i<tLen;i++)tPos[i*3]=-16-i*1.6;
+const tGeo=new THREE.BufferGeometry();tGeo.setAttribute('position',new THREE.BufferAttribute(tPos,3));
+scene.add(new THREE.Line(tGeo,new THREE.LineBasicMaterial({color:0x86ffd4,transparent:true,opacity:LOW_POWER?.2:.26})));
 
-  const outerBar = setShadow(new THREE.Mesh(new THREE.CylinderGeometry(3.4, 2.9, 22, 32), MAT_CANNON));
-  outerBar.rotation.z = Math.PI / 2;
-  outerBar.position.x = -11.0;
-  barGrp.add(outerBar);
+const ND=LOW_POWER?150:350,dPos=new Float32Array(ND*3),dVel=[];
+for(let i=0;i<ND;i++){dPos[i*3]=(Math.random()-.5)*300;dPos[i*3+1]=(Math.random()-.5)*200;dPos[i*3+2]=(Math.random()-.5)*300;dVel.push({vx:(Math.random()-.5)*.02,vy:(Math.random()-.5)*.01,vz:(Math.random()-.5)*.02})}
+const dGeo=new THREE.BufferGeometry();dGeo.setAttribute('position',new THREE.BufferAttribute(dPos,3));
+scene.add(new THREE.Points(dGeo,new THREE.PointsMaterial({color:0x88ccff,size:LOW_POWER?.5:.7,transparent:true,opacity:.2,sizeAttenuation:true})));
+load(88);
 
-  const spine = new THREE.Mesh(new THREE.BoxGeometry(14.0, 2.3, 1.1), MAT_CANNON_RING);
-  spine.position.set(-9.5, -2.1, 0);
-  barGrp.add(spine);
+// SPEECH
+const quips=["Duuude... wicked gnarly out here, little dude.","Cannons charged. Don't test me, bro.","I love being a spaceship. No cap.","That donut planet? Smelled amazing.","Hamsters are at full send. Let's ride.","Fahad keeps punching my walls. Chill out.","Acid breath warmed up. You've been warned.","Next stop: the unknown. Totally righteous.","Bradford cracked another ale. Morale's peaking.","Galamiel said something weird again. He was right.","Meowcenary sharpening his rapier again. Intense.","The currents of the astral sea are radical today.","My propeller hat? It's load-bearing. Don't ask.","Dude, being from an eternal plane is so chill.","Fahad asked if the stars have hit points.","We don't need a map. We have vibes."];
+const bubbleEl=document.getElementById('bubble');let bPhase=0,bTimer=0,bIdx=0;
+function showBub(){bubbleEl.textContent=quips[bIdx++%quips.length];bubbleEl.style.opacity='1';bPhase=1;bTimer=0}
+setTimeout(showBub,2000);
 
-  for (let r = 0; r < 3; r++) {
-    const dr = new THREE.Mesh(new THREE.TorusGeometry(3.2, 0.52, 12, 40), MAT_CANNON_RING);
-    dr.rotation.y = Math.PI / 2;
-    dr.position.x = -4.2 - r * 5.2;
-    barGrp.add(dr);
-  }
-
-  const muzzleRim = new THREE.Mesh(new THREE.TorusGeometry(3.2, 0.7, 14, 40), MAT_NOZZLE);
-  muzzleRim.rotation.y = Math.PI / 2;
-  muzzleRim.position.x = -21.2;
-  barGrp.add(muzzleRim);
-
-  const muzzleGlow = new THREE.Mesh(new THREE.CircleGeometry(2.8, 28),
-    M(0xffc861, 0.3, 0.0, 0xff7a00, 2.8));
-  muzzleGlow.rotation.y = Math.PI / 2;
-  muzzleGlow.position.x = -21.6;
-  barGrp.add(muzzleGlow);
-
-  const innerCore = new THREE.Mesh(new THREE.CircleGeometry(1.4, 20),
-    M(0x78d7ff, 0.2, 0.0, 0x2b9dff, 2.0));
-  innerCore.rotation.y = Math.PI / 2;
-  innerCore.position.x = -21.75;
-  barGrp.add(innerCore);
-
-  const innerBar = new THREE.Mesh(
-    new THREE.CylinderGeometry(2.4, 2.4, 22, 20, 1, true),
-    new THREE.MeshStandardMaterial({
-      color: 0xffb65b, emissive: 0xff7b12, emissiveIntensity: 1.2,
-      transparent: true, opacity: 0.45, side: THREE.BackSide
-    })
-  );
-  innerBar.rotation.z = Math.PI / 2;
-  innerBar.position.x = -11.0;
-  barGrp.add(innerBar);
-
-  const cLight = new THREE.PointLight(0xff8c33, 3.8, 34);
-  cLight.position.x = -21.8;
-  barGrp.add(cLight);
-
-  const muzzleMarker = new THREE.Object3D();
-  muzzleMarker.position.x = -22.0;
-  barGrp.add(muzzleMarker);
-
-  cGrp.add(barGrp);
-  cGrp.position.set(-17.4, 8.7, posZ);
-  return { group: cGrp, barGrp, muzzleMarker };
-}
-
-const cannon1 = buildCannon(16);
-const cannon2 = buildCannon(-16);
-ROOT.add(cannon1.group);
-ROOT.add(cannon2.group);
-ROOT.updateMatrixWorld(true);
-
-load(70);
-
-// =============================================
-//  PARTICLES
-// =============================================
-
-// Booster exhaust
-const NC = LOW_POWER ? 260 : 600;
-const cPos = new Float32Array(NC * 3);
-const cVel = [];
-const muzzleScratch = new THREE.Vector3();
-const acidScratch = new THREE.Vector3();
-const muzzles = [cannon1.muzzleMarker, cannon2.muzzleMarker];
-
-function resetCannonPt(i) {
-  const m = muzzles[i % 2].getWorldPosition(muzzleScratch);
-  cPos[i*3]   = m.x + (Math.random() - 0.5) * 2.5;
-  cPos[i*3+1] = m.y + (Math.random() - 0.5) * 2.5;
-  cPos[i*3+2] = m.z + (Math.random() - 0.5) * 2.5;
-  cVel[i] = {
-    vx: -(Math.random() * 1.15 + 0.95),
-    vy:  (Math.random() - 0.5) * 0.16,
-    vz:  (Math.random() - 0.5) * 0.12,
-    life: Math.random() * 1.3 + 0.18
-  };
-}
-for (let i = 0; i < NC; i++) resetCannonPt(i);
-
-const cannonGeo = new THREE.BufferGeometry();
-cannonGeo.setAttribute('position', new THREE.BufferAttribute(cPos, 3));
-const cannonPts = new THREE.Points(cannonGeo, new THREE.PointsMaterial({
-  color: 0xffb766, size: LOW_POWER ? 1.2 : 1.5, transparent: true, opacity: 0.9, sizeAttenuation: true
-}));
-scene.add(cannonPts);
-
-// Acid particles (from mouth)
-const NA = LOW_POWER ? 160 : 320;
-const aPos = new Float32Array(NA * 3);
-const aVel = [];
-
-function resetAcidPt(i) {
-  const mouth = mouthMarker.getWorldPosition(acidScratch);
-  aPos[i*3]   = mouth.x + Math.random() * 4;
-  aPos[i*3+1] = mouth.y + (Math.random() - 0.5) * 3.2;
-  aPos[i*3+2] = mouth.z + (Math.random() - 0.5) * 3.2;
-  aVel[i] = {
-    vx: Math.random() * 0.65 + 0.25,
-    vy: (Math.random() - 0.5) * 0.07,
-    vz: (Math.random() - 0.5) * 0.07,
-    life: Math.random() * 1.8 + 0.4
-  };
-}
-for (let i = 0; i < NA; i++) resetAcidPt(i);
-
-const acidGeoP = new THREE.BufferGeometry();
-acidGeoP.setAttribute('position', new THREE.BufferAttribute(aPos, 3));
-const acidPts = new THREE.Points(acidGeoP, new THREE.PointsMaterial({
-  color: 0x33ff44, size: LOW_POWER ? 1.1 : 1.4, transparent: true, opacity: 0.92, sizeAttenuation: true
-}));
-scene.add(acidPts);
-
-// Engine trail
-const trailLen = LOW_POWER ? 40 : 64;
-const trailPos = new Float32Array(trailLen * 3);
-for (let i = 0; i < trailLen; i++) {
-  trailPos[i * 3] = -16 - i * 1.6;
-}
-const trailGeo = new THREE.BufferGeometry();
-trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
-const trailLine = new THREE.Line(
-  trailGeo,
-  new THREE.LineBasicMaterial({ color: 0x86ffd4, transparent: true, opacity: LOW_POWER ? 0.18 : 0.24 })
-);
-scene.add(trailLine);
-
-// Stars - layer 1 (distant white)
-const NS = LOW_POWER ? 2500 : 5000;
-const sPos = new Float32Array(NS * 3);
-for (let i = 0; i < NS; i++) {
-  const th = Math.random() * Math.PI * 2;
-  const ph = Math.acos(2 * Math.random() - 1);
-  const r = 600 + Math.random() * 900;
-  sPos[i*3]   = r * Math.sin(ph) * Math.cos(th);
-  sPos[i*3+1] = r * Math.sin(ph) * Math.sin(th);
-  sPos[i*3+2] = r * Math.cos(ph);
-}
-const starGeo = new THREE.BufferGeometry();
-starGeo.setAttribute('position', new THREE.BufferAttribute(sPos, 3));
-scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({
-  color: 0xf6fbff, size: LOW_POWER ? 0.72 : 0.82, transparent: true, opacity: 0.88, sizeAttenuation: true
-})));
-
-// Stars - layer 2 (blue accent, closer)
-const NS2 = LOW_POWER ? 200 : 600;
-const sPos2 = new Float32Array(NS2 * 3);
-for (let i = 0; i < NS2; i++) {
-  const th = Math.random() * Math.PI * 2;
-  const ph = Math.acos(2 * Math.random() - 1);
-  const r = 420 + Math.random() * 520;
-  sPos2[i*3]   = r * Math.sin(ph) * Math.cos(th);
-  sPos2[i*3+1] = r * Math.sin(ph) * Math.sin(th);
-  sPos2[i*3+2] = r * Math.cos(ph);
-}
-const accentStars = new THREE.Points(
-  new THREE.BufferGeometry(),
-  new THREE.PointsMaterial({
-    color: 0xa9d7ff,
-    size: LOW_POWER ? 1.35 : 1.85,
-    transparent: true,
-    opacity: LOW_POWER ? 0.38 : 0.48,
-    sizeAttenuation: true
-  })
-);
-accentStars.geometry.setAttribute('position', new THREE.BufferAttribute(sPos2, 3));
-scene.add(accentStars);
-
-// Stars - layer 3 (warm gold, sparse, large)
-const NS3 = LOW_POWER ? 60 : 140;
-const sPos3 = new Float32Array(NS3 * 3);
-for (let i = 0; i < NS3; i++) {
-  const th = Math.random() * Math.PI * 2;
-  const ph = Math.acos(2 * Math.random() - 1);
-  const r = 500 + Math.random() * 700;
-  sPos3[i*3]   = r * Math.sin(ph) * Math.cos(th);
-  sPos3[i*3+1] = r * Math.sin(ph) * Math.sin(th);
-  sPos3[i*3+2] = r * Math.cos(ph);
-}
-scene.add(new THREE.Points(
-  (() => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(sPos3, 3)); return g; })(),
-  new THREE.PointsMaterial({
-    color: 0xffe8a0,
-    size: LOW_POWER ? 2.0 : 2.8,
-    transparent: true,
-    opacity: 0.32,
-    sizeAttenuation: true
-  })
-));
-
-// Cosmic dust (very fine, drifting particles near the turtle)
-const NDUST = LOW_POWER ? 120 : 300;
-const dustPos = new Float32Array(NDUST * 3);
-const dustVel = [];
-for (let i = 0; i < NDUST; i++) {
-  dustPos[i*3]   = (Math.random() - 0.5) * 300;
-  dustPos[i*3+1] = (Math.random() - 0.5) * 200;
-  dustPos[i*3+2] = (Math.random() - 0.5) * 300;
-  dustVel.push({
-    vx: (Math.random() - 0.5) * 0.02,
-    vy: (Math.random() - 0.5) * 0.01,
-    vz: (Math.random() - 0.5) * 0.02
-  });
-}
-const dustGeo = new THREE.BufferGeometry();
-dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
-const dustPts = new THREE.Points(dustGeo, new THREE.PointsMaterial({
-  color: 0x88ccff,
-  size: LOW_POWER ? 0.5 : 0.7,
-  transparent: true,
-  opacity: 0.18,
-  sizeAttenuation: true
-}));
-scene.add(dustPts);
-
-// =============================================
-//  DONUT PLANET
-// =============================================
-const planetGrp = new THREE.Group();
-planetGrp.position.set(310, 110, -460);
-scene.add(planetGrp);
-
-const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(42, 44, 32),
-  M(0xff9900, 0.85, 0.0, 0xff6600, 2.8));
-planetGrp.add(sunMesh);
-
-const corona = new THREE.Mesh(new THREE.SphereGeometry(62, 28, 20), new THREE.MeshStandardMaterial({
-  color: 0xff4400, emissive: 0xff2200, emissiveIntensity: 0.55,
-  transparent: true, opacity: 0.13, side: THREE.BackSide
-}));
-planetGrp.add(corona);
-
-// Outer corona glow
-const outerCorona = new THREE.Mesh(new THREE.SphereGeometry(85, 20, 16), new THREE.MeshStandardMaterial({
-  color: 0xff6600, emissive: 0xff3300, emissiveIntensity: 0.25,
-  transparent: true, opacity: 0.06, side: THREE.BackSide, depthWrite: false
-}));
-planetGrp.add(outerCorona);
-
-// The DONUT
-const donutGeo = new THREE.TorusGeometry(106, 24, 26, 100);
-const donutMesh = new THREE.Mesh(donutGeo, M(0xcc5500, 0.58, 0.12, 0x661100, 0.35));
-donutMesh.rotation.x = Math.PI / 2;
-planetGrp.add(donutMesh);
-
-// Frosting on the donut (lighter band on top)
-const frostingGeo = new THREE.TorusGeometry(106, 24.5, 26, 100, Math.PI * 2);
-const frosting = new THREE.Mesh(frostingGeo, new THREE.MeshStandardMaterial({
-  color: 0xffc8a0,
-  roughness: 0.65,
-  metalness: 0.0,
-  transparent: true,
-  opacity: 0.25,
-  side: THREE.FrontSide,
-  depthWrite: false,
-  emissive: 0x442200,
-  emissiveIntensity: 0.15
-}));
-frosting.rotation.x = Math.PI / 2;
-frosting.position.y = 0.5;
-planetGrp.add(frosting);
-
-// Sprinkles (tiny colored dots on the donut)
-for (let i = 0; i < 40; i++) {
-  const t = Math.random() * Math.PI * 2;
-  const p = Math.random() * Math.PI * 2;
-  const sprinkleColor = [0xff4466, 0x44ff66, 0x4488ff, 0xffcc22, 0xff66cc][i % 5];
-  const sprinkle = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.8, 0.8), M(sprinkleColor, 0.5, 0.0, sprinkleColor, 0.5));
-  const R = 106;
-  const r = 25;
-  sprinkle.position.set(
-    (R + r * Math.cos(p)) * Math.cos(t),
-    r * Math.sin(p) + 0.5,
-    (R + r * Math.cos(p)) * Math.sin(t)
-  );
-  sprinkle.rotation.set(Math.random() * 2, Math.random() * 2, Math.random() * 2);
-  sprinkle.visible = Math.sin(p) > 0.2; // only on top half
-  planetGrp.add(sprinkle);
-}
-
-const donutAtmos = new THREE.Mesh(
-  new THREE.TorusGeometry(106, 28, 18, 100),
-  new THREE.MeshBasicMaterial({
-    color: 0xffb07a, transparent: true, opacity: 0.10,
-    side: THREE.DoubleSide, depthWrite: false
-  })
-);
-donutAtmos.rotation.x = Math.PI / 2;
-planetGrp.add(donutAtmos);
-
-const moonA = new THREE.Mesh(new THREE.SphereGeometry(9, 20, 16), M(0x6b7ca1, 0.8, 0.02));
-moonA.position.set(-132, 26, -24);
-planetGrp.add(moonA);
-
-const moonB = new THREE.Mesh(new THREE.SphereGeometry(14, 22, 16), M(0x846a9a, 0.82, 0.02));
-moonB.position.set(145, -34, 58);
-planetGrp.add(moonB);
-
-const ringPlanet = new THREE.Group();
-ringPlanet.position.set(-340, -90, -520);
-scene.add(ringPlanet);
-
-const ringBody = new THREE.Mesh(new THREE.SphereGeometry(28, 28, 22), M(0x4d75a4, 0.72, 0.04));
-ringPlanet.add(ringBody);
-
-const ringBand = new THREE.Mesh(
-  new THREE.TorusGeometry(48, 5.4, 12, 72),
-  new THREE.MeshBasicMaterial({
-    color: 0xbfd9ff, transparent: true, opacity: 0.18,
-    side: THREE.DoubleSide, depthWrite: false
-  })
-);
-ringBand.rotation.x = 1.1;
-ringBand.rotation.y = 0.35;
-ringPlanet.add(ringBand);
-
-const sunLight = new THREE.PointLight(0xff9944, 1.2, 1800, 1.8);
-planetGrp.add(sunLight);
-
-load(85);
-
-// =============================================
-//  NEBULA PLANES (atmospheric depth)
-// =============================================
-function nebula(x, y, z, w, h, col, op) {
-  const g = new THREE.PlaneGeometry(w, h);
-  const m = new THREE.MeshBasicMaterial({
-    color: col, transparent: true, opacity: op,
-    side: THREE.DoubleSide, depthWrite: false
-  });
-  const mesh = new THREE.Mesh(g, m);
-  mesh.position.set(x, y, z);
-  mesh.lookAt(camera.position);
-  return mesh;
-}
-scene.add(nebula(-250, 80, -350, 340, 260, 0x0a1a44, 0.15));
-scene.add(nebula(180, -50, -380, 280, 200, 0x1a0033, 0.11));
-scene.add(nebula(340, 140, -520, 400, 300, 0x2a1604, 0.14));
-scene.add(nebula(-360, -90, -560, 360, 280, 0x041b2a, 0.13));
-scene.add(nebula(0, 200, -700, 500, 350, 0x120828, 0.08));
-scene.add(nebula(-150, -150, -450, 250, 200, 0x0c2218, 0.09));
-
-// =============================================
-//  SPEECH BUBBLES
-// =============================================
-const quips = [
-  "Duuude... wicked gnarly out here, little dude.",
-  "Cannons charged. Don't test me, bro.",
-  "I love being a spaceship. No cap.",
-  "That donut planet? Smelled amazing.",
-  "Hamsters are at full send. Let's ride.",
-  "Fahad keeps punching my walls. Chill out.",
-  "Acid breath warmed up. You've been warned.",
-  "Next stop: the unknown. Totally righteous.",
-  "Bradford cracked another ale. Morale's peaking.",
-  "Galamiel said something weird again. He was right.",
-  "Meowcenary sharpening his rapier again. Intense.",
-  "The currents of the astral sea are radical today.",
-  "My propeller hat? It's load-bearing. Don't ask.",
-  "Dude, being from an eternal plane is so chill.",
-  "Fahad asked if the stars have hit points.",
-  "We don't need a map. We have vibes.",
-];
-const bubbleEl = document.getElementById('bubble');
-let bPhase = 0, bTimer = 0, bIdx = 0;
-
-function showBubble() {
-  bubbleEl.textContent = quips[bIdx % quips.length];
-  bIdx++;
-  bubbleEl.style.opacity = '1';
-  bPhase = 1; bTimer = 0;
-}
-setTimeout(showBubble, 2000);
-
-// =============================================
-//  CAMERA DRAG ORBIT
-// =============================================
-let azim = 0.18, elev = 0.16, dragging = false;
-let px = 0, py = 0;
-let pinchDist = 0;
-let zoomTarget = camRadius;
-const MIN_RADIUS = IS_SMALL_SCREEN ? 46 : 54;
-const MAX_RADIUS = 240;
-
-function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-function touchDist(t0, t1) {
-  return Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
-}
-function setZoom(nextRadius) {
-  zoomTarget = clamp(nextRadius, MIN_RADIUS, MAX_RADIUS);
-}
-
-function dragStart(x, y) { dragging = true; px = x; py = y; }
-function dragMove(x, y) {
-  if (!dragging) return;
-  azim += (x - px) * 0.006;
-  elev = Math.max(-0.45, Math.min(0.55, elev + (y - py) * 0.0045));
-  px = x; py = y;
-}
-renderer.domElement.addEventListener('mousedown', e => dragStart(e.clientX, e.clientY));
-window.addEventListener('mouseup', () => dragging = false);
-window.addEventListener('mousemove', e => dragMove(e.clientX, e.clientY));
-renderer.domElement.addEventListener('wheel', e => {
-  e.preventDefault();
-  setZoom(zoomTarget + e.deltaY * 0.14);
-}, { passive:false });
-renderer.domElement.addEventListener('touchstart', e => {
-  if (e.touches.length === 1) {
-    pinchDist = 0;
-    dragStart(e.touches[0].clientX, e.touches[0].clientY);
-  } else if (e.touches.length >= 2) {
-    dragging = false;
-    pinchDist = touchDist(e.touches[0], e.touches[1]);
-  }
-}, {passive:false});
-window.addEventListener('touchend', e => {
-  if (e.touches.length === 0) {
-    dragging = false;
-    pinchDist = 0;
-  } else if (e.touches.length === 1) {
-    pinchDist = 0;
-    dragStart(e.touches[0].clientX, e.touches[0].clientY);
-  }
-}, {passive:false});
-window.addEventListener('touchmove', e => {
-  if (e.touches.length >= 2) {
-    e.preventDefault();
-    const nextDist = touchDist(e.touches[0], e.touches[1]);
-    if (pinchDist > 0) setZoom(zoomTarget - (nextDist - pinchDist) * 0.52);
-    pinchDist = nextDist;
-    return;
-  }
-  dragMove(e.touches[0].clientX, e.touches[0].clientY);
-}, {passive:false});
-
+// CAMERA
+let azim=.18,elev=.16,dragging=false,px=0,py=0,pinchDist=0,zoomTarget=camRadius;
+const MIN_RADIUS=IS_SMALL?46:54,MAX_RADIUS=240;
+function clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v))}
+function tDist(t0,t1){return Math.hypot(t0.clientX-t1.clientX,t0.clientY-t1.clientY)}
+function setZ(r){zoomTarget=clamp(r,MIN_RADIUS,MAX_RADIUS)}
+function dStart(x,y){dragging=true;px=x;py=y}
+function dMove(x,y){if(!dragging)return;azim+=(x-px)*.006;elev=Math.max(-.45,Math.min(.55,elev+(y-py)*.0045));px=x;py=y}
+renderer.domElement.addEventListener('mousedown',e=>dStart(e.clientX,e.clientY));
+window.addEventListener('mouseup',()=>dragging=false);
+window.addEventListener('mousemove',e=>dMove(e.clientX,e.clientY));
+renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();setZ(zoomTarget+e.deltaY*.14)},{passive:false});
+renderer.domElement.addEventListener('touchstart',e=>{if(e.touches.length===1){pinchDist=0;dStart(e.touches[0].clientX,e.touches[0].clientY)}else if(e.touches.length>=2){dragging=false;pinchDist=tDist(e.touches[0],e.touches[1])}},{passive:false});
+window.addEventListener('touchend',e=>{if(e.touches.length===0){dragging=false;pinchDist=0}else if(e.touches.length===1){pinchDist=0;dStart(e.touches[0].clientX,e.touches[0].clientY)}},{passive:false});
+window.addEventListener('touchmove',e=>{if(e.touches.length>=2){e.preventDefault();const nd=tDist(e.touches[0],e.touches[1]);if(pinchDist>0)setZ(zoomTarget-(nd-pinchDist)*.52);pinchDist=nd;return}dMove(e.touches[0].clientX,e.touches[0].clientY)},{passive:false});
 load(100);
 
-// =============================================
-//  RENDER LOOP
-// =============================================
-const clock = new THREE.Clock();
-let T2 = 0;
-const trailAnchorLocal = new THREE.Vector3(-34, 7.5, 0);
-const trailScratch = new THREE.Vector3();
-const trailHistory = Array.from({ length: trailLen }, (_, i) => new THREE.Vector3(-20 - i * 1.5, 0, 0));
+// ANIMATION
+const clock=new THREE.Clock();let T2=0;
+const tAnchor=new THREE.Vector3(-34,7.5,0),tScr=new THREE.Vector3();
+const tHist=Array.from({length:tLen},(_,i)=>new THREE.Vector3(-20-i*1.5,0,0));
 
-function animate() {
-  requestAnimationFrame(animate);
-  const dt = Math.min(clock.getDelta(), 0.05);
-  T2 += dt;
-
-  // === Turtle idle motion (gentle breathing + drift) ===
-  const breathe = Math.sin(T2 * 0.72) * 2.8;
-  ROOT.position.y = breathe;
-  ROOT.position.x = Math.sin(T2 * 0.15) * 1.2;
-  ROOT.rotation.y = Math.sin(T2 * 0.21) * 0.045;
-  ROOT.rotation.z = Math.sin(T2 * 0.35) * 0.018;
-  ROOT.rotation.x = Math.sin(T2 * 0.28) * 0.008;
-
-  // Shell breathing (subtle scale pulse)
-  const breathScale = 1.0 + Math.sin(T2 * 0.72) * 0.004;
-  shellMesh.scale.set(1.22 * breathScale, 0.76 * breathScale, 1.08 * breathScale);
-
-  // Head motion (natural, alive)
-  headGrp.position.y = 4 + Math.sin(T2 * 0.95 + 0.3) * 0.65;
-  headGrp.rotation.z = Math.sin(T2 * 0.55) * 0.055;
-  headGrp.rotation.y = Math.sin(T2 * 0.42) * 0.065;
-  headGrp.rotation.x = Math.sin(T2 * 0.38 + 0.5) * 0.02;
-  ROOT.updateMatrixWorld();
-
-  // Eye tracking (looking around curiously)
-  const gazeX = 0.84 + Math.sin(T2 * 0.6) * 0.2;
-  const gazeY = Math.sin(T2 * 0.9 + 0.5) * 0.12;
-  [eyeR, eyeL].forEach(eye => {
-    eye.iris.position.set(gazeX, gazeY, 0);
-    eye.pupil.position.set(gazeX + 0.42, gazeY - 0.02, 0);
-    eye.gleam.position.set(gazeX + 0.85, 1.03 + gazeY * 0.35, 0.55);
-  });
-
-  // === Flippers (graceful swimming drift) ===
-  // Front flippers - slow, powerful sweeps
-  const fSweep = Math.sin(T2 * 0.5);
-  legFR.grp.rotation.x = 0.1 + fSweep * 0.04;
-  legFR.grp.rotation.z = 0.06 + Math.sin(T2 * 0.5 + 0.2) * 0.025;
-  legFL.grp.rotation.x = 0.1 + Math.sin(T2 * 0.5 + 0.9) * 0.04;
-  legFL.grp.rotation.z = -0.06 - Math.sin(T2 * 0.5 + 1.1) * 0.025;
-
-  legFR.fin.rotation.y = 0.88 + fSweep * 0.1;
-  legFL.fin.rotation.y = -0.88 - Math.sin(T2 * 0.5 + 0.9) * 0.1;
-  legFR.tip.rotation.y = 0.88 + Math.sin(T2 * 0.65) * 0.12;
-  legFL.tip.rotation.y = -0.88 - Math.sin(T2 * 0.65 + 0.9) * 0.12;
-
-  // Back flippers - slower, rudder-like
-  legBR.grp.rotation.x = 0.06 + Math.sin(T2 * 0.4 + 0.7) * 0.025;
-  legBL.grp.rotation.x = 0.06 + Math.sin(T2 * 0.4 + 1.4) * 0.025;
-  legBR.fin.rotation.y = 0.65 + Math.sin(T2 * 0.45 + 0.4) * 0.06;
-  legBL.fin.rotation.y = -0.65 - Math.sin(T2 * 0.45 + 0.4) * 0.06;
-  legBR.tip.rotation.y = 0.65 + Math.sin(T2 * 0.55 + 0.2) * 0.07;
-  legBL.tip.rotation.y = -0.65 - Math.sin(T2 * 0.55 + 0.2) * 0.07;
-
-  // Tail wag
-  tailGrp.rotation.y = Math.sin(T2 * 1.2) * 0.15;
-  tailGrp.rotation.x = Math.sin(T2 * 0.8 + 0.3) * 0.08;
-
-  // === Propeller spin ===
-  bladeGrp.rotation.y += dt * 7.5;
-
-  // === Planet rotation ===
-  planetGrp.rotation.y += dt * 0.025;
-  donutMesh.rotation.z += dt * 0.008;
-
-  // === Light pulses (organic, alive) ===
-  domeGL.intensity  = 1.2 + Math.sin(T2 * 1.2) * 0.28;
-  cgl1.intensity    = 3.0 + Math.sin(T2 * 10.0) * 0.65;
-  agl.intensity     = 2.2 + Math.sin(T2 * 6.0) * 0.45;
-  hgl.intensity     = 1.0 + Math.sin(T2 * 3.0) * 0.25;
-  igMesh.material.emissiveIntensity = 0.45 + Math.sin(T2 * 1.2) * 0.15;
-  coreGlow.material.emissiveIntensity = 2.5 + Math.sin(T2 * 4.0) * 0.5;
-  coreHalo.material.opacity = 0.1 + Math.sin(T2 * 3.5) * 0.04;
-  rearWinGlass.material.opacity = 0.02 + Math.sin(T2 * 1.3) * 0.01;
-  rearBayMainLight.intensity = 4.5 + Math.sin(T2 * 1.5) * 0.8;
-  bayLight.intensity = 3.5 + Math.sin(T2 * 2.0) * 0.6;
-
-  // Megaphone rim pulse
-  megRim.material.emissiveIntensity = 1.1 + Math.sin(T2 * 4.5) * 0.28;
-
-  // Ammo bounce
-  ammoBall.position.y = 8.9 + Math.sin(T2 * 2.2) * 0.5;
-  ammoBall.rotation.x += dt * 0.7;
-  ammoBall.rotation.z += dt * 0.45;
-
-  // Crew animation (more lively)
-  crewActors.forEach((actor, idx) => {
-    actor.rotation.y = Math.sin(T2 * 0.9 + idx * 1.5) * 0.3;
-    actor.position.y = Math.sin(T2 * 1.4 + idx * 0.7) * 0.14;
-    // Subtle forward/back lean
-    actor.rotation.x = Math.sin(T2 * 0.7 + idx * 0.9) * 0.05;
-  });
-
-  // Helm wheel rotation
-  helmWheel.rotation.z = T2 * 0.3;
-
-  // === Hamster wheels (fast, visible) ===
-  wheelA.g.rotation.x += dt * 4.2;
-  wheelB.g.rotation.x += dt * 4.5;
-  // Hamsters running animation
-  wheelA.hamster.position.y = 1.2 + Math.sin(T2 * 8.0) * 0.45;
-  wheelB.hamster.position.y = 1.2 + Math.sin(T2 * 8.5 + 0.8) * 0.45;
-  wheelA.hamster.position.x = 0.06 + Math.cos(T2 * 8.0) * 0.2;
-  wheelB.hamster.position.x = 0.06 + Math.cos(T2 * 8.5 + 0.8) * 0.2;
-  wheelA.hamster.rotation.z = Math.sin(T2 * 8.0) * 0.38;
-  wheelB.hamster.rotation.z = Math.sin(T2 * 8.5 + 0.8) * 0.38;
-
-  // === Booster particles ===
-  for (let i = 0; i < NC; i++) {
-    cVel[i].life -= dt;
-    if (cVel[i].life <= 0) { resetCannonPt(i); continue; }
-    cPos[i*3]   += cVel[i].vx * 50 * dt;
-    cPos[i*3+1] += cVel[i].vy * 50 * dt;
-    cPos[i*3+2] += cVel[i].vz * 50 * dt;
-  }
-  cannonGeo.attributes.position.needsUpdate = true;
-
-  // === Acid particles ===
-  for (let i = 0; i < NA; i++) {
-    aVel[i].life -= dt;
-    if (aVel[i].life <= 0) { resetAcidPt(i); continue; }
-    aPos[i*3]   += aVel[i].vx * 48 * dt;
-    aPos[i*3+1] += aVel[i].vy * 48 * dt + Math.sin(T2 * 6 + i * 0.4) * 0.018;
-    aPos[i*3+2] += aVel[i].vz * 48 * dt;
-  }
-  acidGeoP.attributes.position.needsUpdate = true;
-
-  // === Cosmic dust drift ===
-  for (let i = 0; i < NDUST; i++) {
-    dustPos[i*3]   += dustVel[i].vx;
-    dustPos[i*3+1] += dustVel[i].vy;
-    dustPos[i*3+2] += dustVel[i].vz;
-    if (Math.abs(dustPos[i*3]) > 200) dustPos[i*3] *= -0.8;
-    if (Math.abs(dustPos[i*3+1]) > 150) dustPos[i*3+1] *= -0.8;
-    if (Math.abs(dustPos[i*3+2]) > 200) dustPos[i*3+2] *= -0.8;
-  }
-  dustGeo.attributes.position.needsUpdate = true;
-
-  // === Engine trail ===
-  trailScratch.copy(trailAnchorLocal);
-  ROOT.localToWorld(trailScratch);
-  trailHistory.unshift(trailScratch.clone());
-  trailHistory.pop();
-  for (let i = 0; i < trailLen; i++) {
-    const p = trailHistory[i];
-    trailPos[i * 3]     = p.x - i * 0.45;
-    trailPos[i * 3 + 1] = p.y + Math.sin(T2 * 1.8 + i * 0.22) * 0.28;
-    trailPos[i * 3 + 2] = p.z + Math.cos(T2 * 1.3 + i * 0.18) * 0.35;
-  }
-  trailGeo.attributes.position.needsUpdate = true;
-
-  // === Speech ===
-  bTimer += dt;
-  if (bPhase === 1 && bTimer > 4.2) { bubbleEl.style.opacity = '0'; bPhase = 2; bTimer = 0; }
-  if (bPhase === 2 && bTimer > 1.1) { bPhase = 0; bTimer = 0; }
-  if (bPhase === 0 && bTimer > 3.8) showBubble();
-
-  // === Camera orbit ===
-  camRadius += (zoomTarget - camRadius) * 0.24;
-  if (!dragging) azim += dt * 0.09;
-  const camXZ = Math.cos(elev) * camRadius;
-  camera.position.set(
-    Math.sin(azim) * camXZ,
-    Math.sin(elev) * camRadius * 0.75 + (camRadius < 160 ? 23 : 26),
-    Math.cos(azim) * camXZ
-  );
-  camera.lookAt(6, 7, 0);
-
-  renderer.render(scene, camera);
+function animate(){
+requestAnimationFrame(animate);
+const dt=Math.min(clock.getDelta(),.05);T2+=dt;
+ROOT.position.y=Math.sin(T2*.72)*2.8;ROOT.position.x=Math.sin(T2*.15)*1.2;
+ROOT.rotation.y=Math.sin(T2*.21)*.045;ROOT.rotation.z=Math.sin(T2*.35)*.018;ROOT.rotation.x=Math.sin(T2*.28)*.008;
+const bs=1+Math.sin(T2*.72)*.004;shellMesh.scale.set(1.22*bs,.76*bs,1.08*bs);
+headGrp.position.y=4+Math.sin(T2*.95+.3)*.65;headGrp.rotation.z=Math.sin(T2*.55)*.055;headGrp.rotation.y=Math.sin(T2*.42)*.065;headGrp.rotation.x=Math.sin(T2*.38+.5)*.02;
+ROOT.updateMatrixWorld();
+const gx=.84+Math.sin(T2*.6)*.2,gy=Math.sin(T2*.9+.5)*.12;
+[eyeR,eyeL].forEach(e=>{e.iris.position.set(gx,gy,0);e.pupil.position.set(gx+.42,gy-.02,0);e.gleam.position.set(gx+.85,1.03+gy*.35,.55)});
+const fs=Math.sin(T2*.5);
+legFR.grp.rotation.x=.1+fs*.04;legFR.grp.rotation.z=.06+Math.sin(T2*.5+.2)*.025;
+legFL.grp.rotation.x=.1+Math.sin(T2*.5+.9)*.04;legFL.grp.rotation.z=-.06-Math.sin(T2*.5+1.1)*.025;
+legFR.fin.rotation.y=.88+fs*.1;legFL.fin.rotation.y=-.88-Math.sin(T2*.5+.9)*.1;
+legFR.tip.rotation.y=.88+Math.sin(T2*.65)*.12;legFL.tip.rotation.y=-.88-Math.sin(T2*.65+.9)*.12;
+legBR.grp.rotation.x=.06+Math.sin(T2*.4+.7)*.025;legBL.grp.rotation.x=.06+Math.sin(T2*.4+1.4)*.025;
+legBR.fin.rotation.y=.65+Math.sin(T2*.45+.4)*.06;legBL.fin.rotation.y=-.65-Math.sin(T2*.45+.4)*.06;
+tailGrp.rotation.y=Math.sin(T2*1.2)*.15;tailGrp.rotation.x=Math.sin(T2*.8+.3)*.08;
+bladeGrp.rotation.y+=dt*7.5;pG.rotation.y+=dt*.025;donutM.rotation.z+=dt*.008;
+domeGL.intensity=1.2+Math.sin(T2*1.2)*.28;cgl1.intensity=3+Math.sin(T2*10)*.65;agl.intensity=2.2+Math.sin(T2*6)*.45;hgl.intensity=1+Math.sin(T2*3)*.25;
+igMesh.material.emissiveIntensity=.5+Math.sin(T2*1.2)*.15;cG.material.emissiveIntensity=3+Math.sin(T2*4)*.6;cH.material.opacity=.12+Math.sin(T2*3.5)*.05;
+rWGl.material.opacity=.02+Math.sin(T2*1.3)*.01;rbl1.intensity=5+Math.sin(T2*1.5)*.8;
+megRim.material.emissiveIntensity=1.5+Math.sin(T2*4.5)*.35;
+ammoBall.position.y=8.9+Math.sin(T2*2.2)*.5;ammoBall.rotation.x+=dt*.7;ammoBall.rotation.z+=dt*.45;
+crewActors.forEach((a,i)=>{a.rotation.y=Math.sin(T2*.9+i*1.5)*.3;a.position.y=Math.sin(T2*1.4+i*.7)*.14;a.rotation.x=Math.sin(T2*.7+i*.9)*.05});
+helmW.rotation.z=T2*.3;
+wA.g.rotation.x+=dt*4.2;wB.g.rotation.x+=dt*4.5;
+wA.hamster.position.y=1.2+Math.sin(T2*8)*.45;wB.hamster.position.y=1.2+Math.sin(T2*8.5+.8)*.45;
+wA.hamster.position.x=.06+Math.cos(T2*8)*.2;wB.hamster.position.x=.06+Math.cos(T2*8.5+.8)*.2;
+wA.hamster.rotation.z=Math.sin(T2*8)*.38;wB.hamster.rotation.z=Math.sin(T2*8.5+.8)*.38;
+for(let i=0;i<NC;i++){cVel[i].life-=dt;if(cVel[i].life<=0){rCP(i);continue}cPos[i*3]+=cVel[i].vx*50*dt;cPos[i*3+1]+=cVel[i].vy*50*dt;cPos[i*3+2]+=cVel[i].vz*50*dt}canGeo.attributes.position.needsUpdate=true;
+for(let i=0;i<NA;i++){aVel[i].life-=dt;if(aVel[i].life<=0){rAP(i);continue}aPos[i*3]+=aVel[i].vx*48*dt;aPos[i*3+1]+=aVel[i].vy*48*dt+Math.sin(T2*6+i*.4)*.018;aPos[i*3+2]+=aVel[i].vz*48*dt}acidGeo.attributes.position.needsUpdate=true;
+for(let i=0;i<ND;i++){dPos[i*3]+=dVel[i].vx;dPos[i*3+1]+=dVel[i].vy;dPos[i*3+2]+=dVel[i].vz;if(Math.abs(dPos[i*3])>200)dPos[i*3]*=-.8;if(Math.abs(dPos[i*3+1])>150)dPos[i*3+1]*=-.8;if(Math.abs(dPos[i*3+2])>200)dPos[i*3+2]*=-.8}dGeo.attributes.position.needsUpdate=true;
+tScr.copy(tAnchor);ROOT.localToWorld(tScr);tHist.unshift(tScr.clone());tHist.pop();
+for(let i=0;i<tLen;i++){const p=tHist[i];tPos[i*3]=p.x-i*.45;tPos[i*3+1]=p.y+Math.sin(T2*1.8+i*.22)*.28;tPos[i*3+2]=p.z+Math.cos(T2*1.3+i*.18)*.35}tGeo.attributes.position.needsUpdate=true;
+bTimer+=dt;if(bPhase===1&&bTimer>4.2){bubbleEl.style.opacity='0';bPhase=2;bTimer=0}if(bPhase===2&&bTimer>1.1){bPhase=0;bTimer=0}if(bPhase===0&&bTimer>3.8)showBub();
+camRadius+=(zoomTarget-camRadius)*.24;if(!dragging)azim+=dt*.09;
+const camXZ=Math.cos(elev)*camRadius;camera.position.set(Math.sin(azim)*camXZ,Math.sin(elev)*camRadius*.75+(camRadius<160?23:26),Math.cos(azim)*camXZ);camera.lookAt(6,7,0);
+filmPass.uniforms.time.value=T2;
+composer.render();
 }
-
 animate();
 </script>
 </body>
