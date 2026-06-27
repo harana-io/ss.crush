@@ -4,6 +4,3 @@
 
 # Local Claude Code machine settings (personal)
 .claude/settings.local.json
-
-# Separate, independently-tracked repo (has its own origin)
-earl-animation/
