@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cat the Bounty Hunter — Catfolk Rogue, Level 1</title>
+<style>
+/* ─────────────────────────────────────────────────────────────
+   THE CAT IN BOOTS — interactive PF2e Remaster character sheet
+   Dark-first: tavern candlelight. Light: the dossier by daylight.
+   ───────────────────────────────────────────────────────────── */
+
+/* Dark is the default world. */
+:root{
+  --bg:#1E1512; --bg-2:#2A1D18; --bg-3:#382720; --bg-4:#472F25;
+  --line:#4A342B;
+  --ink:#F0E2C8; --ink-2:#C2AC8C; --ink-3:#8D7960;
+  --gold:#E3A93A; --gold-2:#F7CE6B; --gold-dim:#8A6524;
+  --oxblood:#B3423A; --oxblood-dim:#6E2621;
+  --steel:#9FB2BE; --success:#7FB073; --fail:#C0655C;
+  --shadow:0 2px 4px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  --shadow-sm:0 1px 3px rgba(0,0,0,.4);
+  --plate:linear-gradient(160deg,var(--bg-3),var(--bg-2));
+  --rule:1px solid var(--line);
+  --glow:rgba(227,169,58,.16);
+
+  --display:"Hoefler Text","Baskerville","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --body:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --data:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --label:"Gill Sans","Gill Sans MT","Avenir Next",Avenir,"Trebuchet MS",sans-serif;
+}
+/* Daylight, when the OS asks for it and the viewer hasn't forced dark. */
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#E8D9B6; --bg-2:#F4EAD2; --bg-3:#EADCBB; --bg-4:#DCC79C;
+    --line:#C2A575;
+    --ink:#2A1B12; --ink-2:#5A4330; --ink-3:#87694A;
+    --gold:#9A6A14; --gold-2:#7A5210; --gold-dim:#B08A45;
+    --oxblood:#8C2620; --oxblood-dim:#B8776F;
+    --steel:#465A67; --success:#3D6B3A; --fail:#8C332B;
+    --shadow:0 1px 2px rgba(74,52,26,.18), 0 8px 24px rgba(74,52,26,.14);
+    --shadow-sm:0 1px 2px rgba(74,52,26,.2);
+    --plate:linear-gradient(160deg,var(--bg-2),var(--bg-3));
+    --glow:rgba(154,106,20,.14);
+  }
+}
+/* And when they force it explicitly. */
+:root[data-theme="light"]{
+  --bg:#E8D9B6; --bg-2:#F4EAD2; --bg-3:#EADCBB; --bg-4:#DCC79C;
+  --line:#C2A575;
+  --ink:#2A1B12; --ink-2:#5A4330; --ink-3:#87694A;
+  --gold:#9A6A14; --gold-2:#7A5210; --gold-dim:#C7A97A;
+  --oxblood:#8C2620; --oxblood-dim:#B8776F;
+  --steel:#465A67; --success:#3D6B3A; --fail:#8C332B;
+  --shadow:0 1px 2px rgba(74,52,26,.18), 0 8px 24px rgba(74,52,26,.14);
+  --shadow-sm:0 1px 2px rgba(74,52,26,.2);
+  --plate:linear-gradient(160deg,var(--bg-2),var(--bg-3));
+  --glow:rgba(154,106,20,.14);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--body); font-size:16px; line-height:1.6;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, var(--glow), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, var(--glow), transparent 70%);
+  background-attachment:fixed;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:clamp(16px,3vw,40px) clamp(14px,3vw,32px) 72px}
+
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0}
+.eyebrow{
+  font-family:var(--label);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-3);margin:0
+}
+.num{font-family:var(--data);font-variant-numeric:tabular-nums}
+
+/* ── Header ─────────────────────────────────────────────── */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:clamp(18px,3vw,36px);align-items:center;margin-bottom:28px}
+@media (max-width:640px){.hero{grid-template-columns:1fr;text-align:center;justify-items:center;gap:14px}}
+
+.crest{width:clamp(150px,22vw,206px);height:auto;filter:drop-shadow(0 6px 16px rgba(0,0,0,.35))}
+.crest .pupil{transform-box:fill-box;transform-origin:center;transition:transform .45s cubic-bezier(.34,1.4,.5,1)}
+.crest:hover .pupil,.crest:focus-visible .pupil{transform:scale(1.9,1.28)}
+.crest .plume{transform-box:fill-box;transform-origin:12% 88%;transition:transform .6s ease}
+.crest:hover .plume{transform:rotate(-5deg)}
+
+.namefield{
+  font-family:var(--display);font-size:clamp(2.1rem,6vw,3.6rem);line-height:1.04;
+  font-weight:600;color:var(--ink);background:transparent;border:0;
+  border-bottom:2px dashed var(--line);padding:0 4px 4px;width:100%;max-width:15ch;
+  letter-spacing:-.01em;
+}
+.namefield:hover{border-bottom-color:var(--gold)}
+.namefield:focus{outline:none;border-bottom:2px solid var(--gold);background:var(--glow)}
+.namefield::placeholder{color:var(--ink-3);font-style:italic}
+@media (max-width:640px){.namefield{text-align:center}}
+
+.titleline{font-family:var(--display);font-style:italic;font-size:clamp(1rem,2.4vw,1.22rem);color:var(--gold);margin:10px 0 6px}
+.tagline{color:var(--ink-2);max-width:52ch;margin:0}
+@media (max-width:640px){.tagline{margin-inline:auto}}
+.namehint{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+@media (max-width:640px){.namehint{justify-content:center}}
+
+/* ── Buttons ────────────────────────────────────────────── */
+button{font:inherit;color:inherit;cursor:pointer}
+.btn{
+  font-family:var(--label);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  background:var(--bg-3);border:var(--rule);border-radius:2px;color:var(--ink-2);
+  padding:7px 12px;transition:background .15s,color .15s,border-color .15s
+}
+.btn:hover{background:var(--bg-4);color:var(--ink);border-color:var(--gold-dim)}
+.btn:focus-visible,.rollable:focus-visible,.namefield:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.btn.on{background:var(--oxblood-dim);border-color:var(--oxblood);color:var(--ink)}
+
+/* ── Panels ─────────────────────────────────────────────── */
+.panel{background:var(--plate);border:var(--rule);border-radius:3px;box-shadow:var(--shadow);position:relative}
+.panel::before{
+  content:"";position:absolute;inset:0 auto 0 0;width:3px;
+  background:linear-gradient(180deg,var(--gold),transparent 70%);opacity:.6;border-radius:3px 0 0 3px
+}
+.panel-h{
+  display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;
+  padding:14px 18px 10px;border-bottom:var(--rule)
+}
+.panel-h h2{font-size:1.14rem;letter-spacing:.01em}
+.panel-b{padding:16px 18px}
+
+.grid{display:grid;gap:16px}
+.cols-2{grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+
+/* ── Dice bar ───────────────────────────────────────────── */
+.dicebar{
+  position:sticky;top:0;z-index:30;margin:0 0 20px;
+  background:var(--bg-2);border:var(--rule);border-radius:3px;box-shadow:var(--shadow);
+  display:flex;align-items:center;gap:14px;padding:10px 14px;flex-wrap:wrap
+}
+.dicebar .dcbox{display:flex;align-items:center;gap:7px}
+.dicebar label{font-family:var(--label);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.dcinput{
+  width:58px;background:var(--bg);border:var(--rule);border-radius:2px;color:var(--ink);
+  font-family:var(--data);font-size:15px;padding:5px 7px;text-align:center
+}
+.readout{flex:1;min-width:180px;display:flex;align-items:center;gap:10px;min-height:34px}
+.readout .empty{color:var(--ink-3);font-style:italic;font-size:.9rem}
+.total{
+  font-family:var(--data);font-size:1.5rem;font-weight:700;color:var(--gold-2);
+  padding:1px 10px;border:1px solid var(--gold-dim);border-radius:2px;background:var(--bg-3)
+}
+.verdict{font-family:var(--display);font-size:1.06rem;font-style:italic}
+.verdict.crit-s{color:var(--gold-2)} .verdict.s{color:var(--success)}
+.verdict.f{color:var(--ink-2)}       .verdict.crit-f{color:var(--fail)}
+.detail{font-family:var(--data);font-size:.76rem;color:var(--ink-3)}
+.pop{animation:pop .34s cubic-bezier(.2,1.5,.4,1)}
+@keyframes pop{0%{transform:scale(.7) rotate(-6deg);opacity:0}100%{transform:none;opacity:1}}
+
+/* ── Stat tiles ─────────────────────────────────────────── */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px}
+.tile{
+  background:var(--bg-2);border:var(--rule);border-radius:3px;padding:11px 8px;text-align:center;
+  display:flex;flex-direction:column;gap:3px;align-items:center
+}
+.tile .k{font-family:var(--label);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
+.tile .v{font-family:var(--data);font-size:1.5rem;font-weight:700;color:var(--ink);line-height:1.1}
+.tile .s{font-family:var(--data);font-size:.72rem;color:var(--ink-3)}
+.tile.hero-stat .v{color:var(--gold-2)}
+
+.rollable{
+  background:var(--bg-2);border:var(--rule);border-radius:3px;text-align:left;width:100%;
+  padding:9px 11px;display:flex;justify-content:space-between;align-items:center;gap:10px;
+  transition:background .13s,border-color .13s,transform .13s
+}
+.rollable:hover{background:var(--bg-4);border-color:var(--gold-dim);transform:translateY(-1px)}
+.rollable:active{transform:translateY(0)}
+.rollable .rl{font-size:.94rem}
+.rollable .rv{font-family:var(--data);font-weight:700;font-size:1.06rem;color:var(--gold-2)}
+.rollable .sub{font-family:var(--label);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);display:block;margin-top:1px}
+.rolllist{display:grid;gap:7px}
+.rolllist.two{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+
+/* ── Vitals ─────────────────────────────────────────────── */
+.hpline{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hpnum{font-family:var(--data);font-size:2.3rem;font-weight:700;color:var(--ink);line-height:1}
+.hpnum .max{font-size:1.1rem;color:var(--ink-3)}
+.hpbar{height:8px;background:var(--bg);border:var(--rule);border-radius:99px;overflow:hidden;flex:1;min-width:120px}
+.hpfill{height:100%;background:linear-gradient(90deg,var(--oxblood),var(--gold));transition:width .35s ease}
+.pips{display:flex;gap:5px}
+.pip{
+  width:19px;height:19px;border-radius:50%;border:1.5px solid var(--gold-dim);background:transparent;
+  padding:0;transition:background .15s,transform .15s
+}
+.pip.on{background:var(--gold);box-shadow:0 0 8px var(--glow)}
+.pip:hover{transform:scale(1.14)}
+.pip.dy{border-color:var(--oxblood)} .pip.dy.on{background:var(--oxblood);box-shadow:none}
+
+/* ── Strikes ────────────────────────────────────────────── */
+.weapon{border:var(--rule);border-radius:3px;background:var(--bg-2);padding:12px 13px;display:grid;gap:9px}
+.weapon-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.weapon-h .wn{font-family:var(--display);font-size:1.12rem}
+.weapon-h .wd{font-family:var(--data);font-size:.86rem;color:var(--ink-2)}
+.traits{display:flex;gap:5px;flex-wrap:wrap}
+.trait{
+  font-family:var(--label);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--bg-4);border:1px solid var(--line);color:var(--ink-2);padding:2px 6px;border-radius:2px
+}
+.trait.hot{border-color:var(--oxblood);color:var(--oxblood);background:transparent}
+.wbtns{display:flex;gap:7px;flex-wrap:wrap}
+.wbtns .btn{flex:1;min-width:96px;text-align:center}
+.mapsel{display:flex;gap:0;border:var(--rule);border-radius:2px;overflow:hidden}
+.mapsel button{
+  font-family:var(--label);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--bg);border:0;border-right:var(--rule);color:var(--ink-3);padding:5px 8px
+}
+.mapsel button:last-child{border-right:0}
+.mapsel button.on{background:var(--gold-dim);color:var(--ink)}
+
+/* ── Gambit ─────────────────────────────────────────────── */
+.gambit{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px}
+.step{border:var(--rule);border-left:3px solid var(--gold);border-radius:3px;background:var(--bg-2);padding:13px 14px}
+.step .act{font-family:var(--label);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:5px}
+.step h3{font-size:1.04rem;margin-bottom:5px}
+.step p{margin:0;font-size:.9rem;color:var(--ink-2)}
+.step em{color:var(--ink);font-style:normal;font-weight:600}
+
+/* ── Cards ──────────────────────────────────────────────── */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:12px}
+.card{border:var(--rule);border-radius:3px;background:var(--bg-2);padding:13px 14px}
+.card h3{font-size:1.04rem;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card h3 .tag{font-family:var(--label);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:400}
+.card p{margin:6px 0 0;font-size:.89rem;color:var(--ink-2)}
+.card .src{font-family:var(--data);font-size:.7rem;color:var(--ink-3);margin-top:7px;display:block}
+
+/* ── Lists / tables ─────────────────────────────────────── */
+.kv{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.kv li{display:flex;justify-content:space-between;gap:12px;font-size:.91rem;border-bottom:1px dotted var(--line);padding-bottom:5px}
+.kv li:last-child{border-bottom:0}
+.kv .k{color:var(--ink-2)} .kv .v{font-family:var(--data);color:var(--ink);white-space:nowrap}
+
+.log{max-height:190px;overflow-y:auto;display:grid;gap:5px;font-family:var(--data);font-size:.78rem}
+.log div{color:var(--ink-2);border-bottom:1px dotted var(--line);padding-bottom:4px;display:flex;justify-content:space-between;gap:10px}
+.log b{color:var(--gold-2);font-weight:700}
+.log .cs{color:var(--gold-2)} .log .cf{color:var(--fail)}
+
+.foot{margin-top:34px;padding-top:18px;border-top:var(--rule);color:var(--ink-3);font-size:.83rem}
+.foot a{color:var(--gold);text-decoration:underline;text-underline-offset:2px}
+.stack{display:grid;gap:16px}
+.note{font-size:.86rem;color:var(--ink-2);margin:12px 0 0;padding-left:11px;border-left:2px solid var(--gold-dim)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+
+<div class="wrap">
+
+  <!-- ══ HERO ══════════════════════════════════════════════ -->
+  <header class="hero">
+    <svg class="crest" viewBox="0 0 200 200" role="img" aria-label="Crest: a cat in a plumed hat behind a crossed rapier" tabindex="0">
+      <defs>
+        <linearGradient id="gld" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="var(--gold-2)"/><stop offset="1" stop-color="var(--gold)"/>
+        </linearGradient>
+        <linearGradient id="stl" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="var(--steel)"/><stop offset="1" stop-color="var(--ink-3)"/>
+        </linearGradient>
+        <clipPath id="med"><circle cx="100" cy="100" r="92"/></clipPath>
+      </defs>
+
+      <circle cx="100" cy="100" r="92" fill="var(--bg-2)" stroke="var(--gold-dim)" stroke-width="2"/>
+      <circle cx="100" cy="100" r="85" fill="none" stroke="var(--line)" stroke-width="1"/>
+
+      <g clip-path="url(#med)">
+        <!-- rapier, crossed behind everything -->
+        <g stroke-linecap="round">
+          <line x1="34" y1="166" x2="168" y2="34" stroke="url(#stl)" stroke-width="5"/>
+          <line x1="52" y1="148" x2="72" y2="168" stroke="var(--gold)" stroke-width="6"/>
+          <circle cx="42" cy="168" r="6.5" fill="var(--gold)"/>
+        </g>
+        <!-- cape -->
+        <path d="M44 200 Q56 138 100 132 Q144 138 156 200 Z" fill="var(--oxblood-dim)"/>
+        <path d="M62 200 Q72 146 100 142 Q128 146 138 200 Z" fill="var(--oxblood)" opacity=".85"/>
+
+        <!-- ears, flanking the crown so they clear the brim -->
+        <polygon points="48,92 58,44 86,82" fill="var(--bg-4)" stroke="var(--gold-dim)" stroke-width="1.5"/>
+        <polygon points="152,92 142,44 114,82" fill="var(--bg-4)" stroke="var(--gold-dim)" stroke-width="1.5"/>
+        <polygon points="58,86 63,56 78,80" fill="var(--oxblood)" opacity=".6"/>
+        <polygon points="142,86 137,56 122,80" fill="var(--oxblood)" opacity=".6"/>
+
+        <!-- head -->
+        <ellipse cx="100" cy="116" rx="44" ry="40" fill="var(--bg-4)" stroke="var(--gold-dim)" stroke-width="1.5"/>
+
+        <!-- hat: plume tucked behind the crown, then crown, band, buckle, brim -->
+        <path class="plume" d="M130 58 C152 44 160 48 166 38 C160 58 146 68 128 70 Z" fill="url(#gld)" opacity=".95"/>
+        <path d="M66 76 Q70 34 100 32 Q130 34 134 76 Z" fill="var(--bg-3)" stroke="var(--gold-dim)" stroke-width="1.5"/>
+        <rect x="66" y="63" width="68" height="11" fill="var(--oxblood)"/>
+        <rect x="93" y="61" width="14" height="15" rx="2" fill="url(#gld)"/>
+        <ellipse cx="100" cy="78" rx="68" ry="13" fill="var(--bg-3)" stroke="var(--gold-dim)" stroke-width="1.5"/>
+
+        <!-- eyes -->
+        <ellipse cx="84" cy="112" rx="12" ry="13.5" fill="var(--gold-2)"/>
+        <ellipse cx="116" cy="112" rx="12" ry="13.5" fill="var(--gold-2)"/>
+        <ellipse class="pupil" cx="84" cy="112" rx="4" ry="10" fill="#150E0B"/>
+        <ellipse class="pupil" cx="116" cy="112" rx="4" ry="10" fill="#150E0B"/>
+        <circle cx="80" cy="106" r="2.6" fill="#fff" opacity=".9"/>
+        <circle cx="112" cy="106" r="2.6" fill="#fff" opacity=".9"/>
+
+        <!-- muzzle -->
+        <ellipse cx="92" cy="136" rx="12" ry="9" fill="var(--bg-3)" opacity=".7"/>
+        <ellipse cx="108" cy="136" rx="12" ry="9" fill="var(--bg-3)" opacity=".7"/>
+        <polygon points="94,128 106,128 100,135" fill="var(--oxblood)"/>
+        <path d="M100 135 V140 M100 140 Q93 145 88 139 M100 140 Q107 145 112 139"
+              fill="none" stroke="var(--ink-3)" stroke-width="1.8" stroke-linecap="round"/>
+        <g stroke="var(--ink-2)" stroke-width="1.3" stroke-linecap="round" opacity=".8">
+          <line x1="72" y1="130" x2="48" y2="126"/><line x1="72" y1="136" x2="46" y2="138"/>
+          <line x1="128" y1="130" x2="152" y2="126"/><line x1="128" y1="136" x2="154" y2="138"/>
+        </g>
+      </g>
+      <circle cx="100" cy="100" r="92" fill="none" stroke="var(--gold-dim)" stroke-width="2"/>
+    </svg>
+
+    <div>
+      <p class="eyebrow">Pathfinder 2e Remaster · Level 1</p>
+      <input class="namefield" id="pcname" placeholder="Name me" aria-label="Character name" maxlength="18" spellcheck="false">
+      <p class="titleline">Catfolk Rogue · Scoundrel Racket · Bounty Hunter</p>
+      <p class="tagline">A manhunter who would rather be charming than fair. Finds you by scent, follows you at a dead run, and by the time the blade is out you have already lost your balance.</p>
+      <div class="namehint">
+        <button class="btn" id="rollname">Suggest a name</button>
+        <button class="btn" id="themetoggle">Candlelight / Daylight</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ DICE BAR ══════════════════════════════════════════ -->
+  <div class="dicebar">
+    <div class="dcbox">
+      <label for="dc">Target DC</label>
+      <input class="dcinput num" id="dc" type="number" value="15" min="1" max="60" inputmode="numeric">
+    </div>
+    <div class="readout" id="readout"><span class="empty">Tap any number below to roll it.</span></div>
+    <button class="btn" id="clearlog">Clear</button>
+  </div>
+
+  <div class="stack">
+
+    <!-- ══ VITALS ══════════════════════════════════════════ -->
+    <section class="panel">
+      <div class="panel-h"><h2>Vitals</h2><p class="eyebrow">Tap the pips · use the buttons for damage</p></div>
+      <div class="panel-b grid cols-2">
+        <div>
+          <p class="eyebrow" style="margin-bottom:8px">Hit Points</p>
+          <div class="hpline">
+            <div class="hpnum"><span id="hpcur">18</span><span class="max">/18</span></div>
+            <div class="hpbar"><div class="hpfill" id="hpfill" style="width:100%"></div></div>
+          </div>
+          <div class="wbtns" style="margin-top:11px">
+            <button class="btn" data-hp="-1">−1</button>
+            <button class="btn" data-hp="-5">−5</button>
+            <button class="btn" data-hp="1">+1</button>
+            <button class="btn" data-hp="5">+5</button>
+            <button class="btn" data-hp="full">Full</button>
+          </div>
+          <p class="note">Dropped by a <em>nonlethal</em> attack you would be unconscious at 0 HP with <em>no dying condition</em> — which is exactly how you intend to bring other people in.</p>
+        </div>
+        <div>
+          <p class="eyebrow" style="margin-bottom:8px">Hero Points <span style="text-transform:none;letter-spacing:0;font-family:var(--body)">— 1 at session start; spend 1 to reroll, all to cheat death</span></p>
+          <div class="pips" id="heropips"></div>
+          <p class="eyebrow" style="margin:16px 0 8px">Dying</p>
+          <div class="pips" id="dyingpips"></div>
+          <ul class="kv" style="margin-top:16px">
+            <li><span class="k">Speed</span><span class="v">25 ft</span></li>
+            <li><span class="k">Size / Ancestry</span><span class="v">Medium · Catfolk</span></li>
+            <li><span class="k">Languages</span><span class="v">Amurrun, Common</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ ATTRIBUTES + DEFENSES ═══════════════════════════ -->
+    <section class="panel">
+      <div class="panel-h"><h2>Attributes &amp; Defenses</h2><p class="eyebrow">Key attribute · Dexterity</p></div>
+      <div class="panel-b">
+        <div class="tiles">
+          <div class="tile"><span class="k">Str</span><span class="v">+2</span><span class="s">14</span></div>
+          <div class="tile hero-stat"><span class="k">Dex</span><span class="v">+4</span><span class="s">18</span></div>
+          <div class="tile"><span class="k">Con</span><span class="v">+2</span><span class="s">14</span></div>
+          <div class="tile"><span class="k">Int</span><span class="v">+0</span><span class="s">10</span></div>
+          <div class="tile"><span class="k">Wis</span><span class="v">−1</span><span class="s">8</span></div>
+          <div class="tile"><span class="k">Cha</span><span class="v">+2</span><span class="s">14</span></div>
+        </div>
+        <div class="tiles" style="margin-top:12px">
+          <div class="tile hero-stat"><span class="k">Armor Class</span><span class="v">18</span><span class="s">leather</span></div>
+          <div class="tile"><span class="k">Class DC</span><span class="v">17</span><span class="s">trained</span></div>
+        </div>
+        <div class="rolllist two" style="margin-top:12px" id="saves"></div>
+        <p class="note">Reflex is <em>expert</em> at level 1 and your best defence by a mile — which is precisely what <em>Cat's Luck</em> is insurance on.</p>
+      </div>
+    </section>
+
+    <!-- ══ THE GAMBIT ══════════════════════════════════════ -->
+    <section class="panel">
+      <div class="panel-h"><h2>The Scoundrel's Gambit</h2><p class="eyebrow">Your three actions, most turns</p></div>
+      <div class="panel-b">
+        <div class="gambit">
+          <div class="step">
+            <span class="act">Action One</span>
+            <h3>Feint</h3>
+            <p>Deception vs. their Perception DC. On a success they are <em>off-guard against your melee attacks</em> until the end of your next turn. On a crit, off-guard against <em>everyone's</em>.</p>
+          </div>
+          <div class="step">
+            <span class="act">Free Action</span>
+            <h3>Step</h3>
+            <p>Because you hold a <em>finesse</em> weapon, a successful Feint lets you Step for free — into a flank, or out of a reach threat, at no cost.</p>
+          </div>
+          <div class="step">
+            <span class="act">Actions Two &amp; Three</span>
+            <h3>Strike, twice</h3>
+            <p>Into an off-guard target every Strike carries <em>Sneak Attack 1d6</em>. Second Strike takes the multiple attack penalty — mind the −5, or −4 with an agile weapon.</p>
+          </div>
+        </div>
+        <p class="note"><em>Round one is free.</em> Surprise Attack: roll <em>Stealth (+7)</em> or Deception for initiative and everyone who hasn't acted yet is already off-guard to you — no Feint required.</p>
+      </div>
+    </section>
+
+    <!-- ══ STRIKES ═════════════════════════════════════════ -->
+    <section class="panel">
+      <div class="panel-h">
+        <h2>Strikes</h2>
+        <button class="btn" id="offguard" aria-pressed="false">Target off-guard · Sneak Attack OFF</button>
+      </div>
+      <div class="panel-b">
+        <div class="grid cols-2" id="weapons"></div>
+        <p class="note">Only <em>finesse</em> lets you attack with Dexterity — <em>agile</em> merely softens the multiple attack penalty. Either trait qualifies a weapon to carry Sneak Attack.</p>
+      </div>
+    </section>
+
+    <!-- ══ SKILLS ══════════════════════════════════════════ -->
+    <section class="panel">
+      <div class="panel-h"><h2>Skills</h2><p class="eyebrow">12 trained — the most any class gets</p></div>
+      <div class="panel-b">
+        <div class="rolllist two" id="skills"></div>
+        <p class="note">Untrained: Arcana, Crafting, Medicine, Occultism, Religion. Recall Knowledge still works untrained — <em>Treat Wounds does not</em>, so ask who in the party has Medicine.</p>
+      </div>
+    </section>
+
+    <div class="grid cols-2">
+      <!-- ══ FEATS ═════════════════════════════════════════ -->
+      <section class="panel">
+        <div class="panel-h"><h2>Feats</h2><p class="eyebrow">Level 1</p></div>
+        <div class="panel-b">
+          <div class="cards" style="grid-template-columns:1fr">
+            <div class="card">
+              <h3>Cat's Luck <span class="tag">Ancestry · Free Action · 1/day</span></h3>
+              <p><strong>Trigger:</strong> you fail a Reflex save. Reroll it and use the better result.</p>
+              <span class="src">Player Core 2, p. 10</span>
+            </div>
+            <div class="card">
+              <h3>Nimble Dodge <span class="tag">Class · Reaction</span></h3>
+              <p><strong>Trigger:</strong> a creature you can see targets you with an attack. +2 circumstance bonus to AC against it. You have 18 HP — this is how you keep them.</p>
+              <span class="src">Player Core, p. 169</span>
+            </div>
+            <div class="card">
+              <h3>Lie to Me <span class="tag">Skill</span></h3>
+              <p>In back-and-forth conversation, use your <strong>Deception DC (15)</strong> instead of your Perception DC to catch someone lying to you.</p>
+              <span class="src">Player Core, p. 258</span>
+            </div>
+            <div class="card">
+              <h3>Experienced Tracker <span class="tag">Background</span></h3>
+              <p>Track while moving at <strong>full Speed</strong>, at a −5 penalty. The penalty disappears at master Survival.</p>
+              <span class="src">Player Core, p. 255</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══ THE HUNT ══════════════════════════════════════ -->
+      <section class="panel">
+        <div class="panel-h"><h2>The Hunt</h2><p class="eyebrow">Hunting Catfolk · Bounty Hunter</p></div>
+        <div class="panel-b">
+          <div class="cards" style="grid-template-columns:1fr">
+            <div class="card">
+              <h3>Imprecise Scent <span class="tag">30 feet</span></h3>
+              <p>Pinpoint creatures by smell. The GM usually doubles the range downwind and halves it upwind. A creature invisible or in darkness is generally only <strong>hidden</strong> from you rather than undetected — a flat check, not a guess.</p>
+            </div>
+            <div class="card">
+              <h3>On the Trail <span class="tag">+2 circumstance</span></h3>
+              <p>To Track a creature or object you have smelled before. Stacks with Experienced Tracker, so you track at a run.</p>
+            </div>
+            <div class="card">
+              <h3>Low-Light Vision · Land on Your Feet</h3>
+              <p>Dim light is bright light to you. When you fall you take <strong>half damage</strong> and do not land prone.</p>
+            </div>
+            <div class="card">
+              <h3>Sneak Attack 1d6 · Surprise Attack</h3>
+              <p>Extra precision damage against off-guard targets with agile, finesse, or ranged attacks. Rises to 2d6 at level 5.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="grid cols-2">
+      <!-- ══ GEAR ══════════════════════════════════════════ -->
+      <section class="panel">
+        <div class="panel-h"><h2>Kit</h2><p class="eyebrow">Proposed — not yet purchased</p></div>
+        <div class="panel-b">
+          <ul class="kv">
+            <li><span class="k">Leather armor</span><span class="v">2 gp</span></li>
+            <li><span class="k">Rapier</span><span class="v">2 gp</span></li>
+            <li><span class="k">Monkey's Fist</span><span class="v">1 sp</span></li>
+            <li><span class="k">Dagger ×3</span><span class="v">6 sp</span></li>
+            <li><span class="k">Shortbow + 20 arrows</span><span class="v">3 gp 1 sp</span></li>
+            <li><span class="k">Thieves' Toolkit</span><span class="v">3 gp</span></li>
+            <li><span class="k">Adventurer's Pack</span><span class="v">1 gp 5 sp</span></li>
+            <li><span class="k"><strong>Spent of 15 gp</strong></span><span class="v"><strong>12 gp 3 sp</strong></span></li>
+            <li><span class="k">Purse</span><span class="v">2 gp 7 sp</span></li>
+          </ul>
+          <p class="note">Bulk sits near 4.7 against a limit of 7. The pack already holds rope, bedroll, flint and steel, rations, soap, torches and a waterskin — don't buy them twice.</p>
+        </div>
+      </section>
+
+      <!-- ══ LOG ═══════════════════════════════════════════ -->
+      <section class="panel">
+        <div class="panel-h"><h2>Roll Log</h2><p class="eyebrow">Newest first</p></div>
+        <div class="panel-b"><div class="log" id="log"><div><span>Nothing rolled yet.</span></div></div></div>
+      </section>
+    </div>
+
+  </div>
+
+  <footer class="foot">
+    <p><strong>Level 1 · complete but unnamed.</strong> Gear is a proposal; the ancestry is Uncommon and wants GM sign-off. Rules text from <a href="https://2e.aonprd.com/">Archives of Nethys</a>, filtered to Remaster entries — <em>Player Core</em> and <em>Player Core 2</em>.</p>
+    <p style="margin-top:6px">Sneak Attack, deadly dice and critical doubling are all applied in the damage roller: a critical hit doubles the full total, then adds the deadly die undoubled.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ── state ─────────────────────────────────────────── */
+  var HP_MAX = 18, hp = 18, heroPts = 1, dying = 0, offGuard = false;
+  var NAMES = ["Alyara","Crinto","Drewan","Espes","Ferrus","Gerran","Halhat",
+               "Hoya","Ruun","Sevastin","Tespa","Yonsol","Zakkar","Zathra"];
+
+  var SAVES = [
+    {n:"Fortitude",  m:5, s:"Con +2 · trained"},
+    {n:"Reflex",     m:9, s:"Dex +4 · expert"},
+    {n:"Will",       m:4, s:"Wis −1 · expert"},
+    {n:"Perception", m:4, s:"Wis −1 · expert"}
+  ];
+
+  var SKILLS = [
+    {n:"Acrobatics",  m:7, a:"Dex"}, {n:"Stealth",     m:7, a:"Dex"},
+    {n:"Thievery",    m:7, a:"Dex"}, {n:"Athletics",   m:5, a:"Str"},
+    {n:"Deception",   m:5, a:"Cha"}, {n:"Diplomacy",   m:5, a:"Cha"},
+    {n:"Intimidation",m:5, a:"Cha"}, {n:"Performance", m:5, a:"Cha"},
+    {n:"Legal Lore",  m:3, a:"Int"}, {n:"Society",     m:3, a:"Int"},
+    {n:"Nature",      m:2, a:"Wis"}, {n:"Survival",    m:2, a:"Wis"}
+  ];
+
+  /* deadly: extra die added on a crit, never doubled */
+  var WEAPONS = [
+    {n:"Rapier",        atk:7, dice:1, die:6, mod:2, agile:false, deadly:8,
+     dmg:"1d6+2 piercing", traits:["finesse","deadly d8","disarm"]},
+    {n:"Monkey's Fist", atk:7, dice:1, die:6, mod:2, agile:false, deadly:0,
+     dmg:"1d6+2 bludgeoning", traits:["finesse","nonlethal","monk"], hot:"nonlethal"},
+    {n:"Dagger",        atk:7, dice:1, die:4, mod:2, agile:true,  deadly:0,
+     dmg:"1d4+2 piercing", traits:["agile","finesse","thrown 10 ft","versatile S"]},
+    {n:"Shortbow",      atk:7, dice:1, die:6, mod:0, agile:false, deadly:10,
+     dmg:"1d6 piercing", traits:["deadly d10","range 60 ft"]},
+    {n:"Fist",          atk:7, dice:1, die:4, mod:2, agile:true,  deadly:0,
+     dmg:"1d4+2 bludgeoning", traits:["agile","finesse","nonlethal","unarmed"], hot:"nonlethal"}
+  ];
+
+  var $ = function(id){ return document.getElementById(id); };
+  var d = function(sides){ return 1 + Math.floor(Math.random()*sides); };
+
+  /* ── readout + log ─────────────────────────────────── */
+  function show(total, verdict, cls, detail){
+    var r = $("readout");
+    r.innerHTML = "";
+    var t = document.createElement("span");
+    t.className = "total pop"; t.textContent = total;
+    var v = document.createElement("span");
+    v.className = "verdict " + (cls||""); v.textContent = verdict;
+    var s = document.createElement("span");
+    s.className = "detail"; s.textContent = detail || "";
+    r.appendChild(t); r.appendChild(v); r.appendChild(s);
+  }
+  function log(label, text, cls){
+    var l = $("log");
+    if (l.dataset.fresh !== "1"){ l.innerHTML = ""; l.dataset.fresh = "1"; }
+    var row = document.createElement("div");
+    var a = document.createElement("span"); a.textContent = label;
+    var b = document.createElement("b"); b.textContent = text;
+    if (cls) b.className = cls;
+    row.appendChild(a); row.appendChild(b);
+    l.insertBefore(row, l.firstChild);
+    while (l.children.length > 40) l.removeChild(l.lastChild);
+  }
+
+  /* ── the check ─────────────────────────────────────── */
+  function check(label, mod){
+    var nat = d(20), total = nat + mod, dc = parseInt($("dc").value, 10);
+    var verdict, cls, step;
+
+    if (isNaN(dc)){
+      show(total, "", "", "d20 " + nat + (mod<0?" − ":" + ") + Math.abs(mod));
+      log(label, String(total));
+      return;
+    }
+    if      (total >= dc + 10) step = 2;
+    else if (total >= dc)      step = 1;
+    else if (total <= dc - 10) step = -1;
+    else                       step = 0;
+
+    if (nat === 20) step++;
+    if (nat === 1)  step--;
+    if (step > 2)  step = 2;
+    if (step < -1) step = -1;
+
+    if      (step === 2)  { verdict = "Critical success"; cls = "crit-s"; }
+    else if (step === 1)  { verdict = "Success";          cls = "s"; }
+    else if (step === 0)  { verdict = "Failure";          cls = "f"; }
+    else                  { verdict = "Critical failure"; cls = "crit-f"; }
+
+    var natTag = nat === 20 ? " · natural 20" : (nat === 1 ? " · natural 1" : "");
+    show(total, verdict, cls,
+         "d20 " + nat + (mod<0?" − ":" + ") + Math.abs(mod) + " vs DC " + dc + natTag);
+    log(label, total + " · " + verdict, step===2 ? "cs" : (step===-1 ? "cf" : ""));
+    return step;
+  }
+
+  /* ── damage ────────────────────────────────────────── */
+  function damage(w, crit){
+    var parts = [], sum = 0, i, r;
+    for (i = 0; i < w.dice; i++){ r = d(w.die); sum += r; parts.push("d"+w.die+" "+r); }
+    if (w.mod){ sum += w.mod; parts.push("Str +" + w.mod); }
+    if (offGuard){ r = d(6); sum += r; parts.push("sneak d6 " + r); }
+
+    var total = sum, tail = "";
+    if (crit){
+      total = sum * 2; tail = " ×2";
+      if (w.deadly){ r = d(w.deadly); total += r; tail += " + deadly d" + w.deadly + " " + r; }
+    }
+    show(total, crit ? "Critical damage" : "Damage", crit ? "crit-s" : "s",
+         parts.join(" · ") + tail);
+    log(w.n + (crit ? " crit damage" : " damage"), String(total), crit ? "cs" : "");
+  }
+
+  /* ── build: saves ──────────────────────────────────── */
+  var sv = $("saves");
+  SAVES.forEach(function(s){
+    var b = document.createElement("button");
+    b.className = "rollable";
+    b.innerHTML = '<span class="rl">' + s.n + '<span class="sub">' + s.s + '</span></span>' +
+                  '<span class="rv">+' + s.m + '</span>';
+    b.addEventListener("click", function(){ check(s.n, s.m); });
+    sv.appendChild(b);
+  });
+
+  /* ── build: skills ─────────────────────────────────── */
+  var sk = $("skills");
+  SKILLS.forEach(function(s){
+    var b = document.createElement("button");
+    b.className = "rollable";
+    b.innerHTML = '<span class="rl">' + s.n + '<span class="sub">' + s.a + '</span></span>' +
+                  '<span class="rv">+' + s.m + '</span>';
+    b.addEventListener("click", function(){ check(s.n, s.m); });
+    sk.appendChild(b);
+  });
+
+  /* ── build: weapons ────────────────────────────────── */
+  var wrapEl = $("weapons");
+  WEAPONS.forEach(function(w){
+    var mapState = 0;                                  /* 0 = first attack */
+    var el = document.createElement("div");
+    el.className = "weapon";
+
+    var pens = w.agile ? [0,-4,-8] : [0,-5,-10];
+    var traitHTML = w.traits.map(function(t){
+      return '<span class="trait' + (t === w.hot ? " hot" : "") + '">' + t + '</span>';
+    }).join("");
+
+    el.innerHTML =
+      '<div class="weapon-h"><span class="wn">' + w.n + '</span>' +
+      '<span class="wd">+' + w.atk + ' · ' + w.dmg + '</span></div>' +
+      '<div class="traits">' + traitHTML + '</div>' +
+      '<div class="mapsel" role="group" aria-label="Multiple attack penalty for ' + w.n + '">' +
+        '<button class="on" data-i="0">1st +' + w.atk + '</button>' +
+        '<button data-i="1">2nd ' + fmt(w.atk + pens[1]) + '</button>' +
+        '<button data-i="2">3rd ' + fmt(w.atk + pens[2]) + '</button>' +
+      '</div>' +
+      '<div class="wbtns">' +
+        '<button class="btn atk">Attack</button>' +
+        '<button class="btn dmg">Damage</button>' +
+        '<button class="btn cdmg">Crit</button>' +
+      '</div>';
+
+    var mapBtns = el.querySelectorAll(".mapsel button");
+    Array.prototype.forEach.call(mapBtns, function(b){
+      b.addEventListener("click", function(){
+        mapState = parseInt(b.dataset.i, 10);
+        Array.prototype.forEach.call(mapBtns, function(x){ x.classList.remove("on"); });
+        b.classList.add("on");
+      });
+    });
+
+    el.querySelector(".atk").addEventListener("click", function(){
+      var mod = w.atk + pens[mapState];
+      var lbl = w.n + (mapState ? " (" + (mapState+1) + (mapState===1?"nd":"rd") + " attack)" : "");
+      var step = check(lbl, mod);
+      if (step === 2) damage(w, true);
+      else if (step === 1) damage(w, false);
+    });
+    el.querySelector(".dmg").addEventListener("click", function(){ damage(w, false); });
+    el.querySelector(".cdmg").addEventListener("click", function(){ damage(w, true); });
+
+    wrapEl.appendChild(el);
+  });
+  function fmt(n){ return (n < 0 ? "−" : "+") + Math.abs(n); }
+
+  /* ── off-guard toggle ──────────────────────────────── */
+  var og = $("offguard");
+  og.addEventListener("click", function(){
+    offGuard = !offGuard;
+    og.classList.toggle("on", offGuard);
+    og.setAttribute("aria-pressed", offGuard ? "true" : "false");
+    og.textContent = "Target off-guard · Sneak Attack " + (offGuard ? "ON" : "OFF");
+  });
+
+  /* ── hit points ────────────────────────────────────── */
+  function drawHP(){
+    if (hp < 0) hp = 0;
+    if (hp > HP_MAX) hp = HP_MAX;
+    $("hpcur").textContent = hp;
+    $("hpfill").style.width = (hp / HP_MAX * 100) + "%";
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("[data-hp]"), function(b){
+    b.addEventListener("click", function(){
+      var v = b.dataset.hp;
+      hp = (v === "full") ? HP_MAX : hp + parseInt(v, 10);
+      drawHP();
+    });
+  });
+
+  /* ── pips ──────────────────────────────────────────── */
+  function pips(host, count, current, cls, onSet){
+    host.innerHTML = "";
+    for (var i = 1; i <= count; i++){
+      (function(i){
+        var b = document.createElement("button");
+        b.className = "pip " + cls + (i <= current ? " on" : "");
+        b.setAttribute("aria-label", cls === "dy" ? ("Dying " + i) : ("Hero point " + i));
+        b.addEventListener("click", function(){ onSet(i === current ? i - 1 : i); });
+        host.appendChild(b);
+      })(i);
+    }
+  }
+  function drawHero(){ pips($("heropips"), 3, heroPts, "hp", function(v){ heroPts = v; drawHero(); }); }
+  function drawDying(){ pips($("dyingpips"), 4, dying, "dy", function(v){ dying = v; drawDying(); }); }
+  drawHero(); drawDying(); drawHP();
+
+  /* ── name ──────────────────────────────────────────── */
+  var nameEl = $("pcname");
+  try { nameEl.value = localStorage.getItem("pf2e-catfolk-name") || "Cat the Bounty Hunter"; }
+  catch(e){ nameEl.value = "Cat the Bounty Hunter"; }
+  nameEl.addEventListener("input", function(){
+    try { localStorage.setItem("pf2e-catfolk-name", nameEl.value); } catch(e){}
+  });
+  $("rollname").addEventListener("click", function(){
+    var pick = NAMES[Math.floor(Math.random() * NAMES.length)];
+    if (pick === nameEl.value) pick = NAMES[(NAMES.indexOf(pick) + 1) % NAMES.length];
+    nameEl.value = pick;
+    try { localStorage.setItem("pf2e-catfolk-name", pick); } catch(e){}
+  });
+
+  /* ── theme ─────────────────────────────────────────── */
+  $("themetoggle").addEventListener("click", function(){
+    var root = document.documentElement, cur = root.getAttribute("data-theme");
+    if (!cur){
+      var darkNow = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      cur = darkNow ? "dark" : "light";
+    }
+    root.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
+  });
+
+  /* ── clear ─────────────────────────────────────────── */
+  $("clearlog").addEventListener("click", function(){
+    var l = $("log");
+    l.innerHTML = "<div><span>Nothing rolled yet.</span></div>";
+    l.dataset.fresh = "0";
+    $("readout").innerHTML = '<span class="empty">Tap any number below to roll it.</span>';
+  });
+})();
+</script>
+</body>
+</html>
